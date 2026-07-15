@@ -10,7 +10,7 @@ LOG_MODEL_PATH = "model/logistic_regression.pkl"
 
 
 def main():
-    @st.cache(persist=True)
+    @st.cache_data
     def load_dataset() -> pd.DataFrame:
         heart_df = pl.read_csv(DATASET_PATH)
         heart_df = heart_df.to_pandas()
