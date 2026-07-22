@@ -1,4 +1,4 @@
-﻿# 🫀 Heart Disease Prediction App
+# 🫀 Heart Disease Prediction App
 
 ![ML](https://img.shields.io/badge/ML-Logistic%20Regression-blue?style=for-the-badge&logo=scikit-learn)
 ![Python](https://img.shields.io/badge/Python-3.9-yellow?style=for-the-badge&logo=python)
@@ -8,7 +8,7 @@
 
 **A machine learning-powered web application that predicts the probability of heart disease based on 17 personal health and lifestyle factors. Built with Python, scikit-learn, and Streamlit.**
 
-[Dataset Source](https://www.cdc.gov/brfss/annual_data/annual_2020.html) | [Data Analysis Repo](https://github.com/kamilpytlak/data-analyses/tree/main/heart-disease-prediction)
+
 
 ---
 
@@ -423,8 +423,8 @@ Float probability: e.g., 0.2341 → "23.41% chance"
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/kamilpytlak/heart-condition-checker.git
-cd heart-condition-checker
+git clone https://github.com/NischalPachauri/Heart-Disease-Prediction-Using-Logistic-Regression.git
+cd Heart-Disease-Prediction-Using-Logistic-Regression
 
 # 2. Install pipenv
 pip install pipenv
@@ -511,14 +511,6 @@ For a detailed comparison of Logistic Regression vs. Decision Tree, Random Fores
 6. **Version lock**: The `.pkl` model file must be loaded with scikit-learn 1.0.2 exactly. Other versions may cause errors.
 7. **Deprecated Streamlit API**: `@st.cache` was deprecated in Streamlit 1.18+. Use `@st.cache_data` for newer versions.
 8. **Sorting artifact**: The `np.sort(heart_df.values, axis=0)` in `load_dataset()` sorts values column-by-column independently, breaking any row-level data relationships. This works here because the dataset is only used to enumerate unique category values for widget dropdowns and for encoding consistency — not for individual record analysis.
-
----
-
-## 👤 Original Author
-
-**Kamil Pytlak** — [GitHub](https://github.com/kamilpytlak/heart-condition-checker)
-
-Data analysis and model building: [kamilpytlak/data-analyses](https://github.com/kamilpytlak/data-analyses/tree/main/heart-disease-prediction)
 
 ---
 

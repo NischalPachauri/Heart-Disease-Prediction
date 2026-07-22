@@ -1,4 +1,4 @@
-﻿# 🔬 Model Comparison & Alternative Approaches
+# 🔬 Model Comparison & Alternative Approaches
 
 ## Heart Disease Prediction — Algorithm Evaluation Report
 
@@ -651,7 +651,6 @@ Adding these derived features could improve any model:
 ## 📚 References
 
 - CDC BRFSS 2020 Data: https://www.cdc.gov/brfss/annual_data/annual_2020.html
-- Kaggle Heart Disease Dataset Analysis: https://www.kaggle.com/datasets/kamilpytlak/personal-key-indicators-of-heart-disease
 - XGBoost Documentation: https://xgboost.readthedocs.io
 - LightGBM Documentation: https://lightgbm.readthedocs.io
 - SHAP Explainability: https://shap.readthedocs.io
