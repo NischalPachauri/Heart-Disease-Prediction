@@ -7,8 +7,10 @@ name = "pypi"
 streamlit = "*"
 pandas = "*"
 polars = "*"
-sklearn = "*"
-scikit-learn = "==1.0.2"
+scikit-learn = ">=1.4.0"
+imbalanced-learn = "*"
+matplotlib = "*"
+seaborn = "*"
 
 [dev-packages]
 

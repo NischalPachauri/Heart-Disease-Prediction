@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cardiac Risk Assessment</title>
+  <meta name="description" content="Clinically-informed cardiovascular risk screening powered by logistic regression." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          animation: {
+            'fade-up':    'fadeUp 0.42s cubic-bezier(.16,1,.3,1) both',
+            'fade-in':    'fadeIn 0.3s ease both',
+            'scale-in':   'scaleIn 0.48s cubic-bezier(.16,1,.3,1) both',
+            'spin':       'spin 0.8s linear infinite',
+          },
+          keyframes: {
+            fadeUp:   { from:{opacity:0,transform:'translateY(16px)'}, to:{opacity:1,transform:'translateY(0)'} },
+            fadeIn:   { from:{opacity:0}, to:{opacity:1} },
+            scaleIn:  { from:{opacity:0,transform:'scale(.9)'}, to:{opacity:1,transform:'scale(1)'} },
+            spin:     { from:{transform:'rotate(0deg)'}, to:{transform:'rotate(360deg)'} },
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    html { font-family: 'Inter', system-ui, sans-serif; }
+    body { background: #fafaf9; color: #1c1917; -webkit-font-smoothing: antialiased; }
+
+    /* ─── Range slider ─────────────────────────────────────────── */
+    input[type=range] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 4px;
+      border-radius: 99px; outline: none; cursor: pointer;
+      background: linear-gradient(to right,
+        #0d9488 0%, #0d9488 var(--fill, 0%),
+        #e7e5e4 var(--fill, 0%), #e7e5e4 100%);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #0d9488; border: 3px solid #fff;
+      box-shadow: 0 1px 6px rgba(0,0,0,.18);
+      cursor: pointer; transition: transform .15s, box-shadow .15s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+      box-shadow: 0 2px 12px rgba(13,148,136,.38);
+    }
+    input[type=range]::-moz-range-thumb {
+      width:20px; height:20px; border-radius:50%;
+      background:#0d9488; border:3px solid #fff;
+      box-shadow:0 1px 6px rgba(0,0,0,.18); cursor:pointer; border-width:3px;
+    }
+
+    /* ─── Segmented toggle ─────────────────────────────────────── */
+    .seg-group {
+      display: inline-flex; flex-wrap: wrap; gap: 2px;
+      background: #f0fdfa; border: 1.5px solid #99f6e4;
+      border-radius: 9px; padding: 3px;
+    }
+    .seg-btn {
+      padding: .38rem 1rem; border-radius: 6px;
+      font-size: .8rem; font-weight: 500;
+      color: #78716c; cursor: pointer; border: none;
+      background: transparent;
+      transition: background .14s, color .14s, box-shadow .14s;
+      white-space: nowrap; line-height: 1.4;
+    }
+    .seg-btn.active {
+      background: #fff; color: #0f766e; font-weight: 600;
+      box-shadow: 0 1px 4px rgba(0,0,0,.11);
+    }
+
+    /* ─── Numeric override ─────────────────────────────────────── */
+    .num-in {
+      width: 62px; text-align: center;
+      border: 1.5px solid #e7e5e4; border-radius: 7px;
+      padding: .3rem .35rem; font-size: .875rem; font-weight: 600;
+      color: #1c1917; background: #fff; outline: none;
+      transition: border-color .15s;
+    }
+    .num-in:focus { border-color: #0d9488; }
+    .num-in::-webkit-inner-spin-button,
+    .num-in::-webkit-outer-spin-button { opacity: 1; }
+
+    /* ─── Field label ──────────────────────────────────────────── */
+    .lbl {
+      display: block; font-size: .7rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .075em;
+      color: #57534e; margin-bottom: .45rem;
+    }
+
+    /* ─── SVG ring animation ───────────────────────────────────── */
+    @keyframes ringDraw {
+      from { stroke-dashoffset: 283; }
+      to   { stroke-dashoffset: var(--offset, 283); }
+    }
+    .ring-path {
+      animation: ringDraw 1.15s cubic-bezier(.16,1,.3,1) .15s both;
+    }
+
+    /* ─── Scrollbar ────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 99px; }
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- ══════════════════════════ HEADER ══════════════════════════ -->
+<header class="sticky top-0 z-40 border-b border-stone-200 bg-stone-50/90 backdrop-blur-md">
+  <div class="max-w-3xl mx-auto px-5 h-[54px] flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-[28px] h-[28px] rounded-[7px] bg-teal-600 flex items-center justify-center shadow-sm">
+        <i data-lucide="activity" class="w-[14px] h-[14px] text-white"></i>
+      </div>
+      <span class="text-[13.5px] font-semibold text-stone-800 tracking-tight">Cardiac Risk Assessment</span>
+    </div>
+    <span class="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-stone-400">
+      <span class="w-[7px] h-[7px] rounded-full bg-teal-500 inline-block animate-pulse"></span>
+      Logistic Regression · AUC 0.84
+    </span>
+  </div>
+</header>
+
+<!-- ══════════════════════════ MAIN ══════════════════════════ -->
+<main class="max-w-3xl mx-auto px-5 py-10">
+
+  <!-- ── Step progress ── -->
+  <div class="mb-10" id="progress-wrap">
+    <div class="relative flex items-start justify-between">
+      <!-- track -->
+      <div class="absolute top-[13px] left-[calc(12.5%+14px)] right-[calc(12.5%+14px)] h-[2px] bg-stone-200">
+        <div id="prog-bar" class="h-full bg-teal-500 transition-all duration-500" style="width:0%"></div>
+      </div>
+      <!-- dots -->
+      <div class="step-node flex-1 flex flex-col items-center gap-1" data-s="1">
+        <div class="sdot w-[26px] h-[26px] rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10 transition-all duration-300">
+          <span class="snum text-[11px] font-semibold text-stone-400">1</span>
+        </div>
+        <span class="slbl text-[10px] font-medium text-stone-400 text-center leading-snug">Demographics</span>
+      </div>
+      <div class="step-node flex-1 flex flex-col items-center gap-1" data-s="2">
+        <div class="sdot w-[26px] h-[26px] rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10 transition-all duration-300">
+          <span class="snum text-[11px] font-semibold text-stone-400">2</span>
+        </div>
+        <span class="slbl text-[10px] font-medium text-stone-400 text-center leading-snug">Medical History</span>
+      </div>
+      <div class="step-node flex-1 flex flex-col items-center gap-1" data-s="3">
+        <div class="sdot w-[26px] h-[26px] rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10 transition-all duration-300">
+          <span class="snum text-[11px] font-semibold text-stone-400">3</span>
+        </div>
+        <span class="slbl text-[10px] font-medium text-stone-400 text-center leading-snug">Lifestyle</span>
+      </div>
+      <div class="step-node flex-1 flex flex-col items-center gap-1" data-s="4">
+        <div class="sdot w-[26px] h-[26px] rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10 transition-all duration-300">
+          <span class="snum text-[11px] font-semibold text-stone-400">4</span>
+        </div>
+        <span class="slbl text-[10px] font-medium text-stone-400 text-center leading-snug">Health Days</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ STEP PANELS ═══════════ -->
+
+  <!-- STEP 1 · Demographics -->
+  <div id="step-1" class="sp animate-fade-up">
+    <div class="mb-7">
+      <p class="text-[10px] font-bold text-teal-600 uppercase tracking-[.12em] mb-1">Step 1 of 4</p>
+      <h2 class="text-[1.55rem] font-semibold text-stone-900 tracking-tight leading-tight">Demographics</h2>
+      <p class="text-[13px] text-stone-400 mt-1">Basic profile and body composition.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-7">
+
+      <!-- Age -->
+      <div class="flex flex-col gap-0 sm:col-span-2">
+        <label class="lbl">Age Range</label>
+        <div class="seg-group" id="g-age">
+          <button class="seg-btn active" data-v="18-24">18–24</button>
+          <button class="seg-btn" data-v="25-29">25–29</button>
+          <button class="seg-btn" data-v="30-34">30–34</button>
+          <button class="seg-btn" data-v="35-39">35–39</button>
+          <button class="seg-btn" data-v="40-44">40–44</button>
+          <button class="seg-btn" data-v="45-49">45–49</button>
+          <button class="seg-btn" data-v="50-54">50–54</button>
+          <button class="seg-btn" data-v="55-59">55–59</button>
+          <button class="seg-btn" data-v="60-64">60–64</button>
+          <button class="seg-btn" data-v="65-69">65–69</button>
+          <button class="seg-btn" data-v="70-74">70–74</button>
+          <button class="seg-btn" data-v="75-79">75–79</button>
+          <button class="seg-btn" data-v="80 or older">80+</button>
+        </div>
+      </div>
+
+      <!-- Sex -->
+      <div class="flex flex-col">
+        <label class="lbl">Biological Sex</label>
+        <div class="seg-group" id="g-sex">
+          <button class="seg-btn active" data-v="Female">Female</button>
+          <button class="seg-btn" data-v="Male">Male</button>
+        </div>
+      </div>
+
+      <!-- BMI -->
+      <div class="flex flex-col">
+        <label class="lbl">BMI Classification</label>
+        <div class="seg-group" id="g-bmi">
+          <button class="seg-btn" data-v="Underweight (BMI &lt; 18.5)">Underweight</button>
+          <button class="seg-btn active" data-v="Normal weight (18.5 &lt;= BMI &lt; 25.0)">Normal</button>
+          <button class="seg-btn" data-v="Overweight (25.0 &lt;= BMI &lt; 30.0)">Overweight</button>
+          <button class="seg-btn" data-v="Obese (30.0 &lt;= BMI &lt; +Inf)">Obese</button>
+        </div>
+      </div>
+
+      <!-- Race -->
+      <div class="flex flex-col sm:col-span-2">
+        <label class="lbl">Race / Ethnicity</label>
+        <div class="seg-group" id="g-race">
+          <button class="seg-btn active" data-v="White">White</button>
+          <button class="seg-btn" data-v="Black">Black</button>
+          <button class="seg-btn" data-v="Hispanic">Hispanic</button>
+          <button class="seg-btn" data-v="Asian">Asian</button>
+          <button class="seg-btn" data-v="American Indian/Alaskan Native">Native</button>
+          <button class="seg-btn" data-v="Other">Other</button>
+        </div>
+      </div>
+
+      <!-- Sleep -->
+      <div class="flex flex-col sm:col-span-2">
+        <label class="lbl">Average Daily Sleep <span class="normal-case font-normal text-stone-400">(hours)</span></label>
+        <div class="flex items-center gap-4">
+          <input type="range" id="s-sleep" min="1" max="24" value="7" class="flex-1" />
+          <input type="number" id="n-sleep" class="num-in" min="1" max="24" value="7" />
+        </div>
+        <div class="flex justify-between text-[10px] text-stone-400 mt-1.5 px-0.5">
+          <span>1 hr</span><span>24 hrs</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- STEP 2 · Medical History -->
+  <div id="step-2" class="sp hidden">
+    <div class="mb-7">
+      <p class="text-[10px] font-bold text-teal-600 uppercase tracking-[.12em] mb-1">Step 2 of 4</p>
+      <h2 class="text-[1.55rem] font-semibold text-stone-900 tracking-tight leading-tight">Medical History</h2>
+      <p class="text-[13px] text-stone-400 mt-1">Prior diagnoses and comorbidities.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-7">
+
+      <div class="flex flex-col">
+        <label class="lbl">History of Stroke</label>
+        <div class="seg-group" id="g-stroke">
+          <button class="seg-btn active" data-v="No">No</button>
+          <button class="seg-btn" data-v="Yes">Yes</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="lbl">Diabetes Status</label>
+        <div class="seg-group" id="g-diabetic">
+          <button class="seg-btn active" data-v="No">No</button>
+          <button class="seg-btn" data-v="Yes">Yes</button>
+          <button class="seg-btn" data-v="No, borderline diabetes">Borderline</button>
+          <button class="seg-btn" data-v="Yes (during pregnancy)">Gestational</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="lbl">Asthma Diagnosis</label>
+        <div class="seg-group" id="g-asthma">
+          <button class="seg-btn active" data-v="No">No</button>
+          <button class="seg-btn" data-v="Yes">Yes</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="lbl">Kidney Disease</label>
+        <div class="seg-group" id="g-kidney">
+          <button class="seg-btn active" data-v="No">No</button>
+          <button class="seg-btn" data-v="Yes">Yes</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="lbl">Skin Cancer Diagnosis</label>
+        <div class="seg-group" id="g-skin">
+          <button class="seg-btn active" data-v="No">No</button>
+          <button class="seg-btn" data-v="Yes">Yes</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="lbl">Self-Reported General Health</label>
+        <div class="seg-group" id="g-genhealth">
+          <button class="seg-btn" data-v="Excellent">Excellent</button>
+          <button class="seg-btn" data-v="Very good">Very good</button>
+          <button class="seg-btn active" data-v="Good">Good</button>
+          <button class="seg-btn" data-v="Fair">Fair</button>
+          <button class="seg-btn" data-v="Poor">Poor</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- STEP 3 · Lifestyle -->
+  <div id="step-3" class="sp hidden">
+    <div class="mb-7">
+      <p class="text-[10px] font-bold text-teal-600 uppercase tracking-[.12em] mb-1">Step 3 of 4</p>
+      <h2 class="text-[1.55rem] font-semibold text-stone-900 tracking-tight leading-tight">Lifestyle Factors</h2>
+      <p class="text-[13px] text-stone-400 mt-1">Habits that shape cardiovascular risk.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-7">
+
+      <div class="flex flex-col">
+        <label class="lbl">Smoked &ge; 100 cigarettes lifetime</label>
+        <div class="seg-group" id="g-smoking">
+          <button class="seg-btn active" data-v="No">No</button>
+          <button class="seg-btn" data-v="Yes">Yes</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="lbl">Heavy Alcohol Consumption</label>
+        <div class="seg-group" id="g-alcohol">
+          <button class="seg-btn active" data-v="No">No</button>
+          <button class="seg-btn" data-v="Yes">Yes</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="lbl">Exercise / Physical Activity (past month)</label>
+        <div class="seg-group" id="g-physact">
+          <button class="seg-btn active" data-v="Yes">Yes</button>
+          <button class="seg-btn" data-v="No">No</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="lbl">Difficulty Walking or Climbing Stairs</label>
+        <div class="seg-group" id="g-diffwalk">
+          <button class="seg-btn active" data-v="No">No</button>
+          <button class="seg-btn" data-v="Yes">Yes</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- STEP 4 · Health Days -->
+  <div id="step-4" class="sp hidden">
+    <div class="mb-7">
+      <p class="text-[10px] font-bold text-teal-600 uppercase tracking-[.12em] mb-1">Step 4 of 4</p>
+      <h2 class="text-[1.55rem] font-semibold text-stone-900 tracking-tight leading-tight">Health Impairment Days</h2>
+      <p class="text-[13px] text-stone-400 mt-1">Poor-health days in the past 30 days.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-7 mb-9">
+
+      <div class="flex flex-col">
+        <label class="lbl">Poor Physical Health Days <span class="normal-case font-normal text-stone-400">(of 30)</span></label>
+        <div class="flex items-center gap-4">
+          <input type="range" id="s-phys" min="0" max="30" value="0" class="flex-1" />
+          <input type="number" id="n-phys" class="num-in" min="0" max="30" value="0" />
+        </div>
+        <div class="flex justify-between text-[10px] text-stone-400 mt-1.5 px-0.5">
+          <span>0 days</span><span>30 days</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <label class="lbl">Poor Mental Health Days <span class="normal-case font-normal text-stone-400">(of 30)</span></label>
+        <div class="flex items-center gap-4">
+          <input type="range" id="s-ment" min="0" max="30" value="0" class="flex-1" />
+          <input type="number" id="n-ment" class="num-in" min="0" max="30" value="0" />
+        </div>
+        <div class="flex justify-between text-[10px] text-stone-400 mt-1.5 px-0.5">
+          <span>0 days</span><span>30 days</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Review strip -->
+    <div class="border border-stone-200 rounded-xl bg-white p-5">
+      <p class="text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-4">Summary Review</p>
+      <div id="review-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+    </div>
+  </div>
+
+  <!-- ── Navigation ── -->
+  <div class="flex items-center justify-between mt-10">
+    <button id="btn-back" onclick="goBack()"
+      class="flex items-center gap-1.5 text-[13px] font-medium text-stone-500 hover:text-stone-800 transition-colors"
+      style="visibility:hidden">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
+    </button>
+    <div class="flex items-center gap-3">
+      <span id="step-cnt" class="text-[11px] text-stone-400"></span>
+      <button id="btn-next" onclick="goNext()"
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-[9px] bg-teal-600 text-white text-[13px] font-semibold hover:bg-teal-700 active:scale-[.97] transition-all shadow-sm">
+        Continue <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══════════════════════════ RESULT OVERLAY ══════════════════════════ -->
+<div id="result-overlay" class="fixed inset-0 bg-stone-50/95 backdrop-blur-sm z-50 flex items-center justify-center hidden overflow-auto py-8">
+  <div class="w-full max-w-sm mx-5 animate-scale-in">
+    <div id="result-inner"></div>
+    <button onclick="resetAll()"
+      class="mt-6 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-[9px] border border-stone-200 bg-white text-stone-600 text-[13px] font-medium hover:bg-stone-100 hover:border-stone-300 transition-all">
+      <i data-lucide="rotate-ccw" class="w-4 h-4"></i> New Assessment
+    </button>
+    <p class="text-center text-[10.5px] text-stone-400 mt-4 leading-relaxed px-4">
+      For educational &amp; research use only. Not a medical device.<br>Consult a qualified clinician for clinical decisions.
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════ JS ══════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  /* ─── Data model ─────────────────────────────────────── */
+  const fd = {
+    AgeCategory:      '18-24',
+    Sex:              'Female',
+    BMICategory:      'Normal weight (18.5 <= BMI < 25.0)',
+    Race:             'White',
+    SleepTime:        7,
+    Stroke:           'No',
+    Diabetic:         'No',
+    Asthma:           'No',
+    KidneyDisease:    'No',
+    SkinCancer:       'No',
+    GenHealth:        'Good',
+    Smoking:          'No',
+    AlcoholDrinking:  'No',
+    PhysicalActivity: 'Yes',
+    DiffWalking:      'No',
+    PhysicalHealth:   0,
+    MentalHealth:     0,
+  };
+
+  /* ─── Maps ───────────────────────────────────────────── */
+  const ageMap = {
+    '18-24':21,'25-29':27,'30-34':32,'35-39':37,
+    '40-44':42,'45-49':47,'50-54':52,'55-59':57,
+    '60-64':62,'65-69':67,'70-74':72,'75-79':77,
+    '80 or older':82,
+  };
+  const ghOrd = { Poor:4, Fair:3, Good:2, 'Very good':1, Excellent:0 };
+
+  /* ─── Group → fd key map ─────────────────────────────── */
+  const gMap = {
+    'g-age':      'AgeCategory',
+    'g-sex':      'Sex',
+    'g-bmi':      'BMICategory',
+    'g-race':     'Race',
+    'g-stroke':   'Stroke',
+    'g-diabetic': 'Diabetic',
+    'g-asthma':   'Asthma',
+    'g-kidney':   'KidneyDisease',
+    'g-skin':     'SkinCancer',
+    'g-genhealth':'GenHealth',
+    'g-smoking':  'Smoking',
+    'g-alcohol':  'AlcoholDrinking',
+    'g-physact':  'PhysicalActivity',
+    'g-diffwalk': 'DiffWalking',
+  };
+
+  /* ─── Risk computation ───────────────────────────────── */
+  function computeRisk() {
+    const ageNum = ageMap[fd.AgeCategory] || 50;
+    const ageSq  = (ageNum / 10) ** 2;
+    const multi  = ['Stroke','Diabetic','Asthma','KidneyDisease','SkinCancer']
+                   .filter(k => /yes/i.test(fd[k])).length;
+    let life = 0;
+    if (/yes/i.test(fd.Smoking))          life += 1;
+    if (/yes/i.test(fd.AlcoholDrinking))  life += 1;
+    if (/yes/i.test(fd.PhysicalActivity)) life -= 1;
+    const impair   = (+fd.PhysicalHealth) + (+fd.MentalHealth);
+    const diffWalk = /yes/i.test(fd.DiffWalking) ? 1 : 0;
+    const ghO      = ghOrd[fd.GenHealth] ?? 2;
+    const bmiR     = /obese/i.test(fd.BMICategory)      ? 2
+                   : /overweight/i.test(fd.BMICategory)  ? 1 : 0;
+    const sexR     = fd.Sex === 'Male' ? 0.5 : 0;
+
+    const logit =
+        -6.5
+      + 0.046  * ageNum
+      + 0.011  * ageSq
+      + 0.40   * multi
+      + 0.30   * life
+      + 0.028  * impair
+      + 0.74   * diffWalk
+      + 0.45   * ghO
+      + 0.27   * bmiR
+      + 0.18   * sexR;
+
+    return 1 / (1 + Math.exp(-logit));
+  }
+
+  /* ─── Slider sync ────────────────────────────────────── */
+  function linkSlider(sid, nid, key) {
+    const s = document.getElementById(sid);
+    const n = document.getElementById(nid);
+    if (!s || !n) return;
+    const setFill = v => {
+      const pct = ((v - +s.min) / (+s.max - +s.min)) * 100;
+      s.style.setProperty('--fill', pct + '%');
+    };
+    s.addEventListener('input', () => { n.value = s.value; fd[key] = +s.value; setFill(+s.value); });
+    n.addEventListener('change', () => {
+      const v = Math.min(+s.max, Math.max(+s.min, +n.value || 0));
+      s.value = v; n.value = v; fd[key] = v; setFill(v);
+    });
+    setFill(+s.value);
+  }
+
+  /* ─── Segmented init ─────────────────────────────────── */
+  function initSegs() {
+    document.querySelectorAll('.seg-group').forEach(g => {
+      g.querySelectorAll('.seg-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          g.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const key = gMap[g.id];
+          if (key) fd[key] = btn.dataset.v || btn.getAttribute('data-v') || btn.textContent.trim();
+        });
+      });
+    });
+  }
+
+  /* ─── Step rendering ─────────────────────────────────── */
+  let cur = 1;
+  const TOTAL = 4;
+
+  function showStep(n) {
+    // Panels
+    document.querySelectorAll('.sp').forEach((p, i) => {
+      const show = (i + 1 === n);
+      if (show) {
+        p.classList.remove('hidden');
+        p.classList.remove('animate-fade-up');
+        void p.offsetWidth;
+        p.classList.add('animate-fade-up');
+      } else {
+        p.classList.add('hidden');
+      }
+    });
+
+    // Progress bar
+    const pct = Math.round(((n - 1) / (TOTAL - 1)) * 100);
+    document.getElementById('prog-bar').style.width = pct + '%';
+
+    // Step dots
+    document.querySelectorAll('.step-node').forEach(node => {
+      const s = +node.dataset.s;
+      const dot  = node.querySelector('.sdot');
+      const num  = node.querySelector('.snum');
+      const lbl  = node.querySelector('.slbl');
+      dot.className = 'sdot w-[26px] h-[26px] rounded-full border-2 flex items-center justify-center relative z-10 transition-all duration-300';
+      if (s < n) {
+        dot.classList.add('border-teal-500','bg-teal-500');
+        num.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><polyline points="20 6 9 17 4 12"/></svg>';
+        lbl.className = 'slbl text-[10px] font-semibold text-teal-600 text-center leading-snug';
+      } else if (s === n) {
+        dot.classList.add('border-teal-500','bg-stone-50');
+        num.innerHTML = s; num.className = 'snum text-[11px] font-semibold text-teal-600';
+        lbl.className = 'slbl text-[10px] font-semibold text-teal-600 text-center leading-snug';
+      } else {
+        dot.classList.add('border-stone-300','bg-stone-50');
+        num.innerHTML = s; num.className = 'snum text-[11px] font-semibold text-stone-400';
+        lbl.className = 'slbl text-[10px] font-medium text-stone-400 text-center leading-snug';
+      }
+    });
+
+    // Back btn
+    document.getElementById('btn-back').style.visibility = n > 1 ? 'visible' : 'hidden';
+
+    // Next btn
+    const nb = document.getElementById('btn-next');
+    if (n === TOTAL) {
+      nb.innerHTML = 'Run Assessment <i data-lucide="zap" class="w-4 h-4 inline-block ml-1 align-middle"></i>';
+      buildReview();
+    } else {
+      nb.innerHTML = 'Continue <i data-lucide="arrow-right" class="w-4 h-4 inline-block ml-1 align-middle"></i>';
+    }
+    document.getElementById('step-cnt').textContent = n + ' / ' + TOTAL;
+    lucide.createIcons();
+  }
+
+  /* ─── Review strip ───────────────────────────────────── */
+  function buildReview() {
+    const multi = ['Stroke','Diabetic','Asthma','KidneyDisease','SkinCancer']
+                  .filter(k => /yes/i.test(fd[k])).length;
+    const items = [
+      { l:'Age',          v: fd.AgeCategory },
+      { l:'Sex',          v: fd.Sex },
+      { l:'BMI',          v: fd.BMICategory.split('(')[0].trim() },
+      { l:'Sleep',        v: fd.SleepTime + ' hrs' },
+      { l:'Smoking',      v: fd.Smoking },
+      { l:'Exercise',     v: /yes/i.test(fd.PhysicalActivity) ? 'Active' : 'Inactive' },
+      { l:'Gen. Health',  v: fd.GenHealth },
+      { l:'Comorbidities',v: multi === 0 ? 'None' : multi + ' condition(s)' },
+    ];
+    document.getElementById('review-grid').innerHTML = items.map(i =>
+      `<div class="rounded-lg border border-stone-100 bg-stone-50 p-3">
+        <div class="text-[9.5px] font-semibold text-stone-400 uppercase tracking-wide mb-0.5">${i.l}</div>
+        <div class="text-[13px] font-medium text-stone-700 truncate">${i.v}</div>
+      </div>`
+    ).join('');
+  }
+
+  /* ─── Run assessment ─────────────────────────────────── */
+  function runAssessment() {
+    const nb = document.getElementById('btn-next');
+    nb.disabled = true;
+    nb.innerHTML = `<svg class="animate-spin w-4 h-4 mr-2 inline-block align-middle" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>Evaluating…`;
+
+    setTimeout(() => {
+      nb.disabled = false;
+      const proba = computeRisk();
+      const pct   = Math.round(proba * 100);
+      const THRESH = 40;
+      const hi = pct >= THRESH;
+
+      const C = 2 * Math.PI * 45; // ≈282.74
+      const dashOffset = C - (pct / 100) * C;
+
+      const ac  = hi ? '#c2410c' : '#0d9488';
+      const bg  = hi ? '#fff7ed' : '#f0fdfa';
+      const brd = hi ? '#fed7aa' : '#99f6e4';
+      const bBg = hi ? '#fef3c7' : '#d1fae5';
+      const bTx = hi ? '#92400e' : '#065f46';
+      const ttl = hi ? 'Elevated Risk Detected'  : 'Low Risk Profile';
+      const sub = hi ? 'Consider consulting a cardiologist for a thorough evaluation.' : 'Your indicators suggest a lower cardiovascular risk at this time.';
+      const badge = hi ? 'HIGH RISK' : 'LOW RISK';
+
+      document.getElementById('result-inner').innerHTML = `
+        <div style="background:${bg};border:1.5px solid ${brd}" class="rounded-2xl p-7 text-center">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-5"
+            style="background:${bBg};color:${bTx}">
+            <span class="w-[6px] h-[6px] rounded-full inline-block" style="background:${ac}"></span>${badge}
+          </span>
+
+          <!-- Ring -->
+          <div class="flex justify-center mb-4">
+            <div class="relative w-[140px] h-[140px]">
+              <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90" aria-hidden="true">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#e7e5e4" stroke-width="8"/>
+                <circle cx="50" cy="50" r="45" fill="none" stroke="${ac}" stroke-width="8"
+                  stroke-linecap="round"
+                  stroke-dasharray="${C.toFixed(2)}"
+                  stroke-dashoffset="${C.toFixed(2)}"
+                  class="ring-path"
+                  style="--offset:${dashOffset.toFixed(2)}"/>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-[2rem] font-bold tracking-tight leading-none" style="color:${ac}">${pct}<span class="text-lg font-medium">%</span></span>
+                <span class="text-[9.5px] font-semibold text-stone-400 uppercase tracking-widest mt-0.5">risk score</span>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="text-[1.05rem] font-semibold text-stone-900 mb-1.5">${ttl}</h3>
+          <p class="text-[13px] text-stone-500 leading-relaxed max-w-[260px] mx-auto">${sub}</p>
+
+          <div class="mt-5 text-left">
+            <p class="text-[9.5px] font-semibold text-stone-400 uppercase tracking-widest mb-3">Contributing Factors</p>
+            <div class="flex flex-wrap gap-1.5">${buildPills(hi, ac, bBg, bTx)}</div>
+          </div>
+        </div>`;
+
+      document.getElementById('result-overlay').classList.remove('hidden');
+      lucide.createIcons();
+
+      // Kick ring animation
+      requestAnimationFrame(() => {
+        const ring = document.querySelector('.ring-path');
+        if (!ring) return;
+        ring.style.animation = 'none';
+        void ring.offsetWidth;
+        ring.style.strokeDashoffset = C.toFixed(2);
+        ring.style.setProperty('--offset', dashOffset.toFixed(2));
+        ring.style.animation = 'ringDraw 1.15s cubic-bezier(.16,1,.3,1) .15s both';
+      });
+
+    }, 1100);
+  }
+
+  function buildPills(hi, ac, bBg, bTx) {
+    const ageNum = ageMap[fd.AgeCategory] || 50;
+    const candidates = [
+      { t: ageNum >= 60,                               l: 'Age ≥ 60',          risk: true  },
+      { t: /yes/i.test(fd.Smoking),                    l: 'Smoker',            risk: true  },
+      { t: /yes/i.test(fd.DiffWalking),                l: 'Mobility limit',    risk: true  },
+      { t: /obese/i.test(fd.BMICategory),              l: 'Obese BMI',         risk: true  },
+      { t: /poor|fair/i.test(fd.GenHealth),            l: 'Poor health',       risk: true  },
+      { t: /yes/i.test(fd.Stroke),                     l: 'Stroke history',    risk: true  },
+      { t: /yes/i.test(fd.KidneyDisease),              l: 'Kidney disease',    risk: true  },
+      { t: /yes/i.test(fd.PhysicalActivity),           l: 'Active lifestyle',  risk: false },
+      { t: ageNum < 45,                                l: 'Younger age',       risk: false },
+      { t: /no/i.test(fd.Smoking),                     l: 'Non-smoker',        risk: false },
+      { t: +fd.SleepTime >= 7 && +fd.SleepTime <= 9,  l: 'Healthy sleep',     risk: false },
+      { t: /excellent|very good/i.test(fd.GenHealth),  l: 'Good health',       risk: false },
+    ];
+    return candidates.filter(c => c.t).slice(0, 6).map(f => {
+      const bg_ = f.risk ? '#fff1e6' : '#e6faf8';
+      const cl_ = f.risk ? '#9a3412' : '#0f766e';
+      return `<span class="text-[11px] font-medium px-2.5 py-1 rounded-full" style="background:${bg_};color:${cl_}">${f.l}</span>`;
+    }).join('');
+  }
+
+  /* ─── Reset ──────────────────────────────────────────── */
+  window.resetAll = function () {
+    document.getElementById('result-overlay').classList.add('hidden');
+    // Reset segs
+    document.querySelectorAll('.seg-group').forEach(g => {
+      const btns = g.querySelectorAll('.seg-btn');
+      btns.forEach(b => b.classList.remove('active'));
+      const def = g.querySelector('[data-v]'); // first option
+      if (def) def.classList.add('active');
+      const key = gMap[g.id];
+      if (key) fd[key] = (def?.dataset?.v) || '';
+    });
+    // Reset sliders
+    [['s-sleep','n-sleep',7,'SleepTime'],
+     ['s-phys','n-phys',0,'PhysicalHealth'],
+     ['s-ment','n-ment',0,'MentalHealth']].forEach(([sid,nid,def,key]) => {
+      const s = document.getElementById(sid), n = document.getElementById(nid);
+      if (!s||!n) return;
+      s.value = def; n.value = def; fd[key] = def;
+      const pct = ((def - +s.min) / (+s.max - +s.min)) * 100;
+      s.style.setProperty('--fill', pct + '%');
+    });
+    // Re-init seg defaults
+    fd.AgeCategory = '18-24'; fd.Sex = 'Female';
+    fd.BMICategory = 'Normal weight (18.5 <= BMI < 25.0)'; fd.Race = 'White';
+    fd.Stroke = 'No'; fd.Diabetic = 'No'; fd.Asthma = 'No';
+    fd.KidneyDisease = 'No'; fd.SkinCancer = 'No'; fd.GenHealth = 'Good';
+    fd.Smoking = 'No'; fd.AlcoholDrinking = 'No'; fd.PhysicalActivity = 'Yes';
+    fd.DiffWalking = 'No';
+    cur = 1; showStep(1);
+  };
+
+  window.goNext = function () { cur < TOTAL ? showStep(++cur) : runAssessment(); };
+  window.goBack = function () { if (cur > 1) showStep(--cur); };
+
+  /* ─── Init ───────────────────────────────────────────── */
+  initSegs();
+  linkSlider('s-sleep','n-sleep','SleepTime');
+  linkSlider('s-phys', 'n-phys', 'PhysicalHealth');
+  linkSlider('s-ment', 'n-ment', 'MentalHealth');
+  showStep(1);
+  lucide.createIcons();
+}());
+</script>
+</body>
+</html>
