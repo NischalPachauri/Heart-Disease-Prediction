@@ -4,39 +4,50 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cardiac Risk Assessment</title>
-  <meta name="description" content="Clinically-informed cardiovascular risk screening powered by logistic regression." />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700&display=swap" rel="stylesheet" />
-
+  <meta name="description" content="Clinically-informed cardiovascular risk screening powered by logistic regression trained on 54,746 CDC BRFSS records." />
+  <!-- tailwind.config MUST be set before the CDN script loads so Tailwind
+       reads it during initialisation. See: https://tailwindcss.com/docs/configuration -->
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
           animation: {
-            'fade-up':    'fadeUp 0.42s cubic-bezier(.16,1,.3,1) both',
-            'fade-in':    'fadeIn 0.3s ease both',
-            'scale-in':   'scaleIn 0.48s cubic-bezier(.16,1,.3,1) both',
-            'spin':       'spin 0.8s linear infinite',
+            'fade-up':  'fadeUp 0.42s cubic-bezier(.16,1,.3,1) both',
+            'fade-in':  'fadeIn 0.3s ease both',
+            'scale-in': 'scaleIn 0.48s cubic-bezier(.16,1,.3,1) both',
+            'spin':     'spin 0.8s linear infinite',
           },
           keyframes: {
-            fadeUp:   { from:{opacity:0,transform:'translateY(16px)'}, to:{opacity:1,transform:'translateY(0)'} },
-            fadeIn:   { from:{opacity:0}, to:{opacity:1} },
-            scaleIn:  { from:{opacity:0,transform:'scale(.9)'}, to:{opacity:1,transform:'scale(1)'} },
-            spin:     { from:{transform:'rotate(0deg)'}, to:{transform:'rotate(360deg)'} },
+            fadeUp:  { from:{opacity:0,transform:'translateY(16px)'}, to:{opacity:1,transform:'translateY(0)'} },
+            fadeIn:  { from:{opacity:0}, to:{opacity:1} },
+            scaleIn: { from:{opacity:0,transform:'scale(.9)'}, to:{opacity:1,transform:'scale(1)'} },
+            spin:    { from:{transform:'rotate(0deg)'}, to:{transform:'rotate(360deg)'} },
           },
         }
       }
     }
   </script>
+  <!-- Tailwind CDN (reads tailwind.config set above) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide icons — pinned version to avoid unexpected breaking changes -->
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#0d9488" />
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; }
     html { font-family: 'Inter', system-ui, sans-serif; }
-    body { background: #fafaf9; color: #1c1917; -webkit-font-smoothing: antialiased; }
+    body { background: #f8f9f8; color: #1c1917; -webkit-font-smoothing: antialiased; }
+
+    /* ─── Focus visible ─────────────────────────────────────────── */
+    *:focus-visible {
+      outline: 2px solid #0d9488;
+      outline-offset: 3px;
+      border-radius: 6px;
+    }
 
     /* ─── Range slider ─────────────────────────────────────────── */
     input[type=range] {
@@ -51,55 +62,68 @@
       -webkit-appearance: none; appearance: none;
       width: 20px; height: 20px; border-radius: 50%;
       background: #0d9488; border: 3px solid #fff;
-      box-shadow: 0 1px 6px rgba(0,0,0,.18);
+      box-shadow: 0 1px 8px rgba(13,148,136,.30);
       cursor: pointer; transition: transform .15s, box-shadow .15s;
     }
     input[type=range]::-webkit-slider-thumb:hover {
-      transform: scale(1.18);
-      box-shadow: 0 2px 12px rgba(13,148,136,.38);
+      transform: scale(1.22);
+      box-shadow: 0 2px 14px rgba(13,148,136,.42);
     }
     input[type=range]::-moz-range-thumb {
       width:20px; height:20px; border-radius:50%;
       background:#0d9488; border:3px solid #fff;
-      box-shadow:0 1px 6px rgba(0,0,0,.18); cursor:pointer; border-width:3px;
+      box-shadow:0 1px 8px rgba(13,148,136,.28); cursor:pointer; border-width:3px;
     }
 
     /* ─── Segmented toggle ─────────────────────────────────────── */
     .seg-group {
       display: inline-flex; flex-wrap: wrap; gap: 2px;
-      background: #f0fdfa; border: 1.5px solid #99f6e4;
-      border-radius: 9px; padding: 3px;
+      background: #f0fdfa; border: 1.5px solid #a7f3d0;
+      border-radius: 10px; padding: 3px;
     }
     .seg-btn {
-      padding: .38rem 1rem; border-radius: 6px;
-      font-size: .8rem; font-weight: 500;
+      padding: .45rem 1.05rem; border-radius: 7px;
+      font-size: .8125rem; font-weight: 500;
       color: #78716c; cursor: pointer; border: none;
       background: transparent;
-      transition: background .14s, color .14s, box-shadow .14s;
+      transition: background .14s, color .14s, box-shadow .14s, transform .1s;
       white-space: nowrap; line-height: 1.4;
+    }
+    .seg-btn:hover:not(.active) {
+      background: rgba(255,255,255,.65);
+      color: #44403c;
     }
     .seg-btn.active {
       background: #fff; color: #0f766e; font-weight: 600;
-      box-shadow: 0 1px 4px rgba(0,0,0,.11);
+      box-shadow: 0 1px 4px rgba(0,0,0,.10), 0 0 0 1px rgba(13,148,136,.10);
+    }
+    .seg-btn:active { transform: scale(.97); }
+    .seg-btn:focus-visible {
+      outline: 2px solid #0d9488; outline-offset: 2px; border-radius: 6px;
     }
 
     /* ─── Numeric override ─────────────────────────────────────── */
     .num-in {
-      width: 62px; text-align: center;
-      border: 1.5px solid #e7e5e4; border-radius: 7px;
-      padding: .3rem .35rem; font-size: .875rem; font-weight: 600;
+      width: 70px; text-align: center;
+      border: 1.5px solid #e7e5e4; border-radius: 8px;
+      padding: .4rem .4rem; font-size: 1rem; font-weight: 600;
       color: #1c1917; background: #fff; outline: none;
-      transition: border-color .15s;
+      transition: border-color .15s, box-shadow .15s;
     }
-    .num-in:focus { border-color: #0d9488; }
+    .num-in:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.12); }
     .num-in::-webkit-inner-spin-button,
     .num-in::-webkit-outer-spin-button { opacity: 1; }
 
     /* ─── Field label ──────────────────────────────────────────── */
     .lbl {
-      display: block; font-size: .7rem; font-weight: 600;
-      text-transform: uppercase; letter-spacing: .075em;
-      color: #57534e; margin-bottom: .45rem;
+      display: flex; align-items: center; gap: 6px;
+      font-size: .75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: #57534e; margin-bottom: .6rem;
+    }
+    .lbl-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #0d9488; flex-shrink: 0;
     }
 
     /* ─── SVG ring animation ───────────────────────────────────── */
@@ -111,6 +135,109 @@
       animation: ringDraw 1.15s cubic-bezier(.16,1,.3,1) .15s both;
     }
 
+    /* ─── Step card ────────────────────────────────────────────── */
+    .step-card {
+      background: #ffffff;
+      border: 1px solid #e7e5e4;
+      border-radius: 20px;
+      padding: 2.25rem 2.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+      position: relative;
+      overflow: hidden;
+    }
+    .step-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #0d9488, #14b8a6);
+      border-radius: 20px 20px 0 0;
+    }
+
+    /* ─── Step label pill ──────────────────────────────────────── */
+    .step-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .7rem; font-weight: 700; letter-spacing: .13em;
+      text-transform: uppercase; color: #0d9488;
+      background: #f0fdfa; border: 1px solid #99f6e4;
+      border-radius: 99px; padding: .25rem .75rem;
+      margin-bottom: .85rem;
+    }
+
+    /* ─── Preset buttons ───────────────────────────────────────── */
+    .preset-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: .35rem .9rem; border-radius: 99px;
+      font-size: .72rem; font-weight: 600; cursor: pointer;
+      border: 1.5px solid; transition: all .15s;
+    }
+    .preset-btn-high {
+      background: #fff7ed; border-color: #fed7aa; color: #9a3412;
+    }
+    .preset-btn-high:hover { background: #ffedd5; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(154,52,18,.12); }
+    .preset-btn-low {
+      background: #f0fdfa; border-color: #99f6e4; color: #0f766e;
+    }
+    .preset-btn-low:hover { background: #ccfbf1; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(13,148,136,.12); }
+
+    /* ─── Divider ──────────────────────────────────────────────── */
+    .field-divider { border-top: 1px solid #f5f5f4; margin: 1.25rem 0; }
+
+    /* ─── Slider track wrapper ─────────────────────────────────── */
+    .slider-wrap {
+      background: #fafaf9;
+      border: 1px solid #f0efee;
+      border-radius: 12px;
+      padding: 1rem 1rem .75rem;
+    }
+
+    /* ─── Step dot glow ────────────────────────────────────────── */
+    .sdot { transition: background .25s, border-color .25s, box-shadow .25s; }
+    .sdot-active { box-shadow: 0 0 0 4px rgba(13,148,136,.15); }
+
+    /* ─── Review card ──────────────────────────────────────────── */
+    .review-card {
+      background: #fff; border: 1px solid #ece9e7;
+      border-radius: 10px; padding: .85rem 1rem;
+      transition: box-shadow .15s;
+    }
+    .review-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+
+    /* ─── Nav buttons ──────────────────────────────────────────── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: .72rem 1.55rem; border-radius: 11px;
+      background: #0d9488; color: #fff;
+      font-size: .875rem; font-weight: 600;
+      border: none; cursor: pointer;
+      box-shadow: 0 1px 3px rgba(13,148,136,.3), 0 4px 12px rgba(13,148,136,.18);
+      transition: background .15s, box-shadow .15s, transform .12s;
+    }
+    .btn-primary:hover {
+      background: #0f766e;
+      box-shadow: 0 1px 3px rgba(13,148,136,.38), 0 6px 18px rgba(13,148,136,.22);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active { transform: scale(.97) translateY(0); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: .72rem 1rem; border-radius: 11px;
+      background: transparent; color: #78716c;
+      font-size: .875rem; font-weight: 500;
+      border: 1.5px solid #e7e5e4; cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .btn-ghost:hover { background: #fff; color: #44403c; border-color: #d6d3d1; }
+
+    /* ─── Metric chip ──────────────────────────────────────────── */
+    .metric-chip {
+      display: flex; flex-direction: column; align-items: center;
+      padding: .55rem .5rem; border-radius: 10px;
+      background: rgba(0,0,0,.025);
+    }
+    .metric-chip .val { font-size: .8rem; font-weight: 700; color: #292524; }
+    .metric-chip .key { font-size: .6rem; font-weight: 600; color: #a8a29e; text-transform: uppercase; letter-spacing: .07em; margin-top: 2px; }
+
     /* ─── Scrollbar ────────────────────────────────────────────── */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -121,52 +248,73 @@
 <body class="min-h-screen">
 
 <!-- ══════════════════════════ HEADER ══════════════════════════ -->
-<header class="sticky top-0 z-40 border-b border-stone-200 bg-stone-50/90 backdrop-blur-md">
-  <div class="max-w-3xl mx-auto px-5 h-[54px] flex items-center justify-between">
-    <div class="flex items-center gap-2.5">
-      <div class="w-[28px] h-[28px] rounded-[7px] bg-teal-600 flex items-center justify-center shadow-sm">
-        <i data-lucide="activity" class="w-[14px] h-[14px] text-white"></i>
+<header class="sticky top-0 z-40 border-b border-stone-200/80 bg-white/92 backdrop-blur-md">
+  <div class="max-w-3xl mx-auto px-5 h-[64px] flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-[10px] bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-sm flex-shrink-0">
+        <i data-lucide="activity" class="w-[18px] h-[18px] text-white"></i>
       </div>
-      <span class="text-[13.5px] font-semibold text-stone-800 tracking-tight">Cardiac Risk Assessment</span>
+      <div class="flex flex-col leading-tight">
+        <!-- h1 required for SEO & screen readers; styled identically to a span -->
+        <h1 class="text-[15px] font-semibold text-stone-900 tracking-tight m-0 p-0 leading-tight">Cardiac Risk Assessment</h1>
+        <span class="text-[11.5px] text-stone-400 leading-tight hidden sm:block">Logistic Regression &middot; CDC BRFSS 2020</span>
+      </div>
     </div>
-    <span class="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-stone-400">
-      <span class="w-[7px] h-[7px] rounded-full bg-teal-500 inline-block animate-pulse"></span>
-      Logistic Regression · AUC 0.84
-    </span>
+    <div class="hidden sm:flex items-center gap-1.5">
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-[11.5px] font-semibold text-teal-700">
+        <span class="w-1.5 h-1.5 rounded-full bg-teal-500 inline-block animate-pulse"></span>AUC 0.841
+      </span>
+      <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 border border-stone-200 text-[11.5px] font-semibold text-stone-600">F1 0.771</span>
+      <!-- Baseline LR recall = 78.4% (winner model) -->
+      <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 border border-stone-200 text-[11.5px] font-semibold text-stone-600">Recall 78%</span>
+      <!-- Shows whether predictions use the real .pkl model or JS approximation -->
+      <span id="model-src-badge" class="hidden items-center gap-1 px-2 py-1 rounded-full text-[10.5px] font-semibold"></span>
+    </div>
   </div>
 </header>
 
 <!-- ══════════════════════════ MAIN ══════════════════════════ -->
-<main class="max-w-3xl mx-auto px-5 py-10">
+<main class="max-w-3xl mx-auto px-5 py-8">
+
+  <!-- ── Quick-fill presets ── -->
+  <div class="flex items-center gap-3 mb-8 flex-wrap">
+    <span class="text-[12px] font-semibold text-stone-400 uppercase tracking-wider">Sample presets:</span>
+    <button class="preset-btn preset-btn-high" onclick="fillHighRisk()" aria-label="Fill form with high-risk sample patient">
+      <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> High-Risk Patient
+    </button>
+    <button class="preset-btn preset-btn-low" onclick="fillLowRisk()" aria-label="Fill form with low-risk sample patient">
+      <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Low-Risk Patient
+    </button>
+  </div>
 
   <!-- ── Step progress ── -->
-  <div class="mb-10" id="progress-wrap">
+  <div class="mb-8" id="progress-wrap">
     <div class="relative flex items-start justify-between">
       <!-- track -->
-      <div class="absolute top-[13px] left-[calc(12.5%+14px)] right-[calc(12.5%+14px)] h-[2px] bg-stone-200">
-        <div id="prog-bar" class="h-full bg-teal-500 transition-all duration-500" style="width:0%"></div>
+      <div class="absolute top-[13px] left-[calc(12.5%+14px)] right-[calc(12.5%+14px)] h-[2px] bg-stone-200 rounded-full">
+        <div id="prog-bar" class="h-full bg-teal-500 transition-all duration-500 rounded-full" style="width:0%"></div>
       </div>
       <!-- dots -->
-      <div class="step-node flex-1 flex flex-col items-center gap-1" data-s="1">
-        <div class="sdot w-[26px] h-[26px] rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10 transition-all duration-300">
+      <div class="step-node flex-1 flex flex-col items-center gap-1.5" data-s="1">
+        <div class="sdot w-7 h-7 rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10">
           <span class="snum text-[11px] font-semibold text-stone-400">1</span>
         </div>
         <span class="slbl text-[10px] font-medium text-stone-400 text-center leading-snug">Demographics</span>
       </div>
-      <div class="step-node flex-1 flex flex-col items-center gap-1" data-s="2">
-        <div class="sdot w-[26px] h-[26px] rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10 transition-all duration-300">
+      <div class="step-node flex-1 flex flex-col items-center gap-1.5" data-s="2">
+        <div class="sdot w-7 h-7 rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10">
           <span class="snum text-[11px] font-semibold text-stone-400">2</span>
         </div>
         <span class="slbl text-[10px] font-medium text-stone-400 text-center leading-snug">Medical History</span>
       </div>
-      <div class="step-node flex-1 flex flex-col items-center gap-1" data-s="3">
-        <div class="sdot w-[26px] h-[26px] rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10 transition-all duration-300">
+      <div class="step-node flex-1 flex flex-col items-center gap-1.5" data-s="3">
+        <div class="sdot w-7 h-7 rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10">
           <span class="snum text-[11px] font-semibold text-stone-400">3</span>
         </div>
         <span class="slbl text-[10px] font-medium text-stone-400 text-center leading-snug">Lifestyle</span>
       </div>
-      <div class="step-node flex-1 flex flex-col items-center gap-1" data-s="4">
-        <div class="sdot w-[26px] h-[26px] rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10 transition-all duration-300">
+      <div class="step-node flex-1 flex flex-col items-center gap-1.5" data-s="4">
+        <div class="sdot w-7 h-7 rounded-full border-2 border-stone-300 bg-stone-50 flex items-center justify-center relative z-10">
           <span class="snum text-[11px] font-semibold text-stone-400">4</span>
         </div>
         <span class="slbl text-[10px] font-medium text-stone-400 text-center leading-snug">Health Days</span>
@@ -178,246 +326,274 @@
 
   <!-- STEP 1 · Demographics -->
   <div id="step-1" class="sp animate-fade-up">
-    <div class="mb-7">
-      <p class="text-[10px] font-bold text-teal-600 uppercase tracking-[.12em] mb-1">Step 1 of 4</p>
-      <h2 class="text-[1.55rem] font-semibold text-stone-900 tracking-tight leading-tight">Demographics</h2>
-      <p class="text-[13px] text-stone-400 mt-1">Basic profile and body composition.</p>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-7">
-
-      <!-- Age -->
-      <div class="flex flex-col gap-0 sm:col-span-2">
-        <label class="lbl">Age Range</label>
-        <div class="seg-group" id="g-age">
-          <button class="seg-btn active" data-v="18-24">18–24</button>
-          <button class="seg-btn" data-v="25-29">25–29</button>
-          <button class="seg-btn" data-v="30-34">30–34</button>
-          <button class="seg-btn" data-v="35-39">35–39</button>
-          <button class="seg-btn" data-v="40-44">40–44</button>
-          <button class="seg-btn" data-v="45-49">45–49</button>
-          <button class="seg-btn" data-v="50-54">50–54</button>
-          <button class="seg-btn" data-v="55-59">55–59</button>
-          <button class="seg-btn" data-v="60-64">60–64</button>
-          <button class="seg-btn" data-v="65-69">65–69</button>
-          <button class="seg-btn" data-v="70-74">70–74</button>
-          <button class="seg-btn" data-v="75-79">75–79</button>
-          <button class="seg-btn" data-v="80 or older">80+</button>
-        </div>
+    <div class="step-card">
+      <div class="mb-7">
+        <span class="step-label"><i data-lucide="user" class="w-3 h-3"></i>Step 1 of 4</span>
+        <h2 class="text-[1.7rem] font-semibold text-stone-900 tracking-tight leading-tight">Demographics</h2>
+        <p class="text-[14px] text-stone-400 mt-1.5 leading-relaxed">Basic profile and body composition.</p>
       </div>
 
-      <!-- Sex -->
-      <div class="flex flex-col">
-        <label class="lbl">Biological Sex</label>
-        <div class="seg-group" id="g-sex">
-          <button class="seg-btn active" data-v="Female">Female</button>
-          <button class="seg-btn" data-v="Male">Male</button>
-        </div>
-      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
-      <!-- BMI -->
-      <div class="flex flex-col">
-        <label class="lbl">BMI Classification</label>
-        <div class="seg-group" id="g-bmi">
-          <button class="seg-btn" data-v="Underweight (BMI &lt; 18.5)">Underweight</button>
-          <button class="seg-btn active" data-v="Normal weight (18.5 &lt;= BMI &lt; 25.0)">Normal</button>
-          <button class="seg-btn" data-v="Overweight (25.0 &lt;= BMI &lt; 30.0)">Overweight</button>
-          <button class="seg-btn" data-v="Obese (30.0 &lt;= BMI &lt; +Inf)">Obese</button>
+        <!-- Age -->
+        <div class="flex flex-col gap-0 sm:col-span-2">
+          <label class="lbl" id="lbl-age"><span class="lbl-dot"></span>Age Range</label>
+          <div class="seg-group" id="g-age" role="radiogroup" aria-labelledby="lbl-age">
+            <button class="seg-btn active" data-v="18-24" role="radio" aria-checked="true" tabindex="0">18–24</button>
+            <button class="seg-btn" data-v="25-29" role="radio" aria-checked="false" tabindex="-1">25–29</button>
+            <button class="seg-btn" data-v="30-34" role="radio" aria-checked="false" tabindex="-1">30–34</button>
+            <button class="seg-btn" data-v="35-39" role="radio" aria-checked="false" tabindex="-1">35–39</button>
+            <button class="seg-btn" data-v="40-44" role="radio" aria-checked="false" tabindex="-1">40–44</button>
+            <button class="seg-btn" data-v="45-49" role="radio" aria-checked="false" tabindex="-1">45–49</button>
+            <button class="seg-btn" data-v="50-54" role="radio" aria-checked="false" tabindex="-1">50–54</button>
+            <button class="seg-btn" data-v="55-59" role="radio" aria-checked="false" tabindex="-1">55–59</button>
+            <button class="seg-btn" data-v="60-64" role="radio" aria-checked="false" tabindex="-1">60–64</button>
+            <button class="seg-btn" data-v="65-69" role="radio" aria-checked="false" tabindex="-1">65–69</button>
+            <button class="seg-btn" data-v="70-74" role="radio" aria-checked="false" tabindex="-1">70–74</button>
+            <button class="seg-btn" data-v="75-79" role="radio" aria-checked="false" tabindex="-1">75–79</button>
+            <button class="seg-btn" data-v="80 or older" role="radio" aria-checked="false" tabindex="-1">80+</button>
+          </div>
         </div>
-      </div>
 
-      <!-- Race -->
-      <div class="flex flex-col sm:col-span-2">
-        <label class="lbl">Race / Ethnicity</label>
-        <div class="seg-group" id="g-race">
-          <button class="seg-btn active" data-v="White">White</button>
-          <button class="seg-btn" data-v="Black">Black</button>
-          <button class="seg-btn" data-v="Hispanic">Hispanic</button>
-          <button class="seg-btn" data-v="Asian">Asian</button>
-          <button class="seg-btn" data-v="American Indian/Alaskan Native">Native</button>
-          <button class="seg-btn" data-v="Other">Other</button>
-        </div>
-      </div>
+        <div class="field-divider sm:col-span-2"></div>
 
-      <!-- Sleep -->
-      <div class="flex flex-col sm:col-span-2">
-        <label class="lbl">Average Daily Sleep <span class="normal-case font-normal text-stone-400">(hours)</span></label>
-        <div class="flex items-center gap-4">
-          <input type="range" id="s-sleep" min="1" max="24" value="7" class="flex-1" />
-          <input type="number" id="n-sleep" class="num-in" min="1" max="24" value="7" />
+        <!-- Sex -->
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-sex"><span class="lbl-dot"></span>Biological Sex</label>
+          <div class="seg-group" id="g-sex" role="radiogroup" aria-labelledby="lbl-sex">
+            <button class="seg-btn active" data-v="Female" role="radio" aria-checked="true">Female</button>
+            <button class="seg-btn" data-v="Male" role="radio" aria-checked="false">Male</button>
+          </div>
         </div>
-        <div class="flex justify-between text-[10px] text-stone-400 mt-1.5 px-0.5">
-          <span>1 hr</span><span>24 hrs</span>
-        </div>
-      </div>
 
+        <!-- BMI -->
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-bmi"><span class="lbl-dot"></span>BMI Classification</label>
+          <div class="seg-group" id="g-bmi" role="radiogroup" aria-labelledby="lbl-bmi">
+            <button class="seg-btn" data-v="Underweight (BMI &lt; 18.5)" role="radio" aria-checked="false">Underweight</button>
+            <button class="seg-btn active" data-v="Normal weight (18.5 &lt;= BMI &lt; 25.0)" role="radio" aria-checked="true">Normal</button>
+            <button class="seg-btn" data-v="Overweight (25.0 &lt;= BMI &lt; 30.0)" role="radio" aria-checked="false">Overweight</button>
+            <button class="seg-btn" data-v="Obese (30.0 &lt;= BMI &lt; +Inf)" role="radio" aria-checked="false">Obese</button>
+          </div>
+        </div>
+
+        <div class="field-divider sm:col-span-2"></div>
+
+        <!-- Race -->
+        <div class="flex flex-col sm:col-span-2">
+          <label class="lbl" id="lbl-race"><span class="lbl-dot"></span>Race / Ethnicity</label>
+          <div class="seg-group" id="g-race" role="radiogroup" aria-labelledby="lbl-race">
+            <button class="seg-btn active" data-v="White" role="radio" aria-checked="true">White</button>
+            <button class="seg-btn" data-v="Black" role="radio" aria-checked="false">Black</button>
+            <button class="seg-btn" data-v="Hispanic" role="radio" aria-checked="false">Hispanic</button>
+            <button class="seg-btn" data-v="Asian" role="radio" aria-checked="false">Asian</button>
+            <button class="seg-btn" data-v="American Indian/Alaskan Native" role="radio" aria-checked="false">Native</button>
+            <button class="seg-btn" data-v="Other" role="radio" aria-checked="false">Other</button>
+          </div>
+        </div>
+
+        <div class="field-divider sm:col-span-2"></div>
+
+        <!-- Sleep -->
+        <div class="flex flex-col sm:col-span-2">
+          <label class="lbl" for="s-sleep"><span class="lbl-dot"></span>Average Daily Sleep <span class="normal-case font-normal text-stone-400">(hours)</span></label>
+          <div class="slider-wrap">
+            <div class="flex items-center gap-4 mb-2">
+              <input type="range" id="s-sleep" min="1" max="24" value="7" class="flex-1" />
+              <input type="number" id="n-sleep" class="num-in" min="1" max="24" value="7" aria-label="Sleep hours" />
+            </div>
+            <div class="flex justify-between text-[11.5px] text-stone-400 px-0.5">
+              <span>1 hr</span><span>24 hrs</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
   <!-- STEP 2 · Medical History -->
   <div id="step-2" class="sp hidden">
-    <div class="mb-7">
-      <p class="text-[10px] font-bold text-teal-600 uppercase tracking-[.12em] mb-1">Step 2 of 4</p>
-      <h2 class="text-[1.55rem] font-semibold text-stone-900 tracking-tight leading-tight">Medical History</h2>
-      <p class="text-[13px] text-stone-400 mt-1">Prior diagnoses and comorbidities.</p>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-7">
-
-      <div class="flex flex-col">
-        <label class="lbl">History of Stroke</label>
-        <div class="seg-group" id="g-stroke">
-          <button class="seg-btn active" data-v="No">No</button>
-          <button class="seg-btn" data-v="Yes">Yes</button>
-        </div>
+    <div class="step-card">
+      <div class="mb-7">
+        <span class="step-label"><i data-lucide="stethoscope" class="w-3 h-3"></i>Step 2 of 4</span>
+        <h2 class="text-[1.7rem] font-semibold text-stone-900 tracking-tight leading-tight">Medical History</h2>
+        <p class="text-[14px] text-stone-400 mt-1.5 leading-relaxed">Prior diagnoses and comorbidities.</p>
       </div>
 
-      <div class="flex flex-col">
-        <label class="lbl">Diabetes Status</label>
-        <div class="seg-group" id="g-diabetic">
-          <button class="seg-btn active" data-v="No">No</button>
-          <button class="seg-btn" data-v="Yes">Yes</button>
-          <button class="seg-btn" data-v="No, borderline diabetes">Borderline</button>
-          <button class="seg-btn" data-v="Yes (during pregnancy)">Gestational</button>
-        </div>
-      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
-      <div class="flex flex-col">
-        <label class="lbl">Asthma Diagnosis</label>
-        <div class="seg-group" id="g-asthma">
-          <button class="seg-btn active" data-v="No">No</button>
-          <button class="seg-btn" data-v="Yes">Yes</button>
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-stroke"><span class="lbl-dot"></span>History of Stroke</label>
+          <div class="seg-group" id="g-stroke" role="radiogroup" aria-labelledby="lbl-stroke">
+            <button class="seg-btn active" data-v="No" role="radio" aria-checked="true">No</button>
+            <button class="seg-btn" data-v="Yes" role="radio" aria-checked="false">Yes</button>
+          </div>
         </div>
-      </div>
 
-      <div class="flex flex-col">
-        <label class="lbl">Kidney Disease</label>
-        <div class="seg-group" id="g-kidney">
-          <button class="seg-btn active" data-v="No">No</button>
-          <button class="seg-btn" data-v="Yes">Yes</button>
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-diabetic"><span class="lbl-dot"></span>Diabetes Status</label>
+          <div class="seg-group" id="g-diabetic" role="radiogroup" aria-labelledby="lbl-diabetic">
+            <button class="seg-btn active" data-v="No" role="radio" aria-checked="true">No</button>
+            <button class="seg-btn" data-v="Yes" role="radio" aria-checked="false">Yes</button>
+            <button class="seg-btn" data-v="No, borderline diabetes" role="radio" aria-checked="false">Borderline</button>
+            <button class="seg-btn" data-v="Yes (during pregnancy)" role="radio" aria-checked="false">Gestational</button>
+          </div>
         </div>
-      </div>
 
-      <div class="flex flex-col">
-        <label class="lbl">Skin Cancer Diagnosis</label>
-        <div class="seg-group" id="g-skin">
-          <button class="seg-btn active" data-v="No">No</button>
-          <button class="seg-btn" data-v="Yes">Yes</button>
+        <div class="field-divider sm:col-span-2"></div>
+
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-asthma"><span class="lbl-dot"></span>Asthma Diagnosis</label>
+          <div class="seg-group" id="g-asthma" role="radiogroup" aria-labelledby="lbl-asthma">
+            <button class="seg-btn active" data-v="No" role="radio" aria-checked="true">No</button>
+            <button class="seg-btn" data-v="Yes" role="radio" aria-checked="false">Yes</button>
+          </div>
         </div>
-      </div>
 
-      <div class="flex flex-col">
-        <label class="lbl">Self-Reported General Health</label>
-        <div class="seg-group" id="g-genhealth">
-          <button class="seg-btn" data-v="Excellent">Excellent</button>
-          <button class="seg-btn" data-v="Very good">Very good</button>
-          <button class="seg-btn active" data-v="Good">Good</button>
-          <button class="seg-btn" data-v="Fair">Fair</button>
-          <button class="seg-btn" data-v="Poor">Poor</button>
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-kidney"><span class="lbl-dot"></span>Kidney Disease</label>
+          <div class="seg-group" id="g-kidney" role="radiogroup" aria-labelledby="lbl-kidney">
+            <button class="seg-btn active" data-v="No" role="radio" aria-checked="true">No</button>
+            <button class="seg-btn" data-v="Yes" role="radio" aria-checked="false">Yes</button>
+          </div>
         </div>
-      </div>
 
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-skin"><span class="lbl-dot"></span>Skin Cancer Diagnosis</label>
+          <div class="seg-group" id="g-skin" role="radiogroup" aria-labelledby="lbl-skin">
+            <button class="seg-btn active" data-v="No" role="radio" aria-checked="true">No</button>
+            <button class="seg-btn" data-v="Yes" role="radio" aria-checked="false">Yes</button>
+          </div>
+        </div>
+
+        <div class="field-divider sm:col-span-2"></div>
+
+        <div class="flex flex-col sm:col-span-2">
+          <label class="lbl" id="lbl-genhealth"><span class="lbl-dot"></span>Self-Reported General Health</label>
+          <div class="seg-group" id="g-genhealth" role="radiogroup" aria-labelledby="lbl-genhealth">
+            <button class="seg-btn" data-v="Excellent" role="radio" aria-checked="false">Excellent</button>
+            <button class="seg-btn" data-v="Very good" role="radio" aria-checked="false">Very good</button>
+            <button class="seg-btn active" data-v="Good" role="radio" aria-checked="true">Good</button>
+            <button class="seg-btn" data-v="Fair" role="radio" aria-checked="false">Fair</button>
+            <button class="seg-btn" data-v="Poor" role="radio" aria-checked="false">Poor</button>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
   <!-- STEP 3 · Lifestyle -->
   <div id="step-3" class="sp hidden">
-    <div class="mb-7">
-      <p class="text-[10px] font-bold text-teal-600 uppercase tracking-[.12em] mb-1">Step 3 of 4</p>
-      <h2 class="text-[1.55rem] font-semibold text-stone-900 tracking-tight leading-tight">Lifestyle Factors</h2>
-      <p class="text-[13px] text-stone-400 mt-1">Habits that shape cardiovascular risk.</p>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-7">
-
-      <div class="flex flex-col">
-        <label class="lbl">Smoked &ge; 100 cigarettes lifetime</label>
-        <div class="seg-group" id="g-smoking">
-          <button class="seg-btn active" data-v="No">No</button>
-          <button class="seg-btn" data-v="Yes">Yes</button>
-        </div>
+    <div class="step-card">
+      <div class="mb-7">
+        <span class="step-label"><i data-lucide="zap" class="w-3 h-3"></i>Step 3 of 4</span>
+        <h2 class="text-[1.7rem] font-semibold text-stone-900 tracking-tight leading-tight">Lifestyle Factors</h2>
+        <p class="text-[14px] text-stone-400 mt-1.5 leading-relaxed">Habits that shape cardiovascular risk.</p>
       </div>
 
-      <div class="flex flex-col">
-        <label class="lbl">Heavy Alcohol Consumption</label>
-        <div class="seg-group" id="g-alcohol">
-          <button class="seg-btn active" data-v="No">No</button>
-          <button class="seg-btn" data-v="Yes">Yes</button>
-        </div>
-      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
-      <div class="flex flex-col">
-        <label class="lbl">Exercise / Physical Activity (past month)</label>
-        <div class="seg-group" id="g-physact">
-          <button class="seg-btn active" data-v="Yes">Yes</button>
-          <button class="seg-btn" data-v="No">No</button>
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-smoking"><span class="lbl-dot"></span>Smoked ≥ 100 cigarettes lifetime</label>
+          <div class="seg-group" id="g-smoking" role="radiogroup" aria-labelledby="lbl-smoking">
+            <button class="seg-btn active" data-v="No" role="radio" aria-checked="true">No</button>
+            <button class="seg-btn" data-v="Yes" role="radio" aria-checked="false">Yes</button>
+          </div>
         </div>
-      </div>
 
-      <div class="flex flex-col">
-        <label class="lbl">Difficulty Walking or Climbing Stairs</label>
-        <div class="seg-group" id="g-diffwalk">
-          <button class="seg-btn active" data-v="No">No</button>
-          <button class="seg-btn" data-v="Yes">Yes</button>
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-alcohol"><span class="lbl-dot"></span>Heavy Alcohol Consumption</label>
+          <div class="seg-group" id="g-alcohol" role="radiogroup" aria-labelledby="lbl-alcohol">
+            <button class="seg-btn active" data-v="No" role="radio" aria-checked="true">No</button>
+            <button class="seg-btn" data-v="Yes" role="radio" aria-checked="false">Yes</button>
+          </div>
         </div>
-      </div>
 
+        <div class="field-divider sm:col-span-2"></div>
+
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-physact"><span class="lbl-dot"></span>Exercise / Physical Activity <span class="normal-case font-normal text-stone-400">(past month)</span></label>
+          <div class="seg-group" id="g-physact" role="radiogroup" aria-labelledby="lbl-physact">
+            <button class="seg-btn active" data-v="Yes" role="radio" aria-checked="true">Yes</button>
+            <button class="seg-btn" data-v="No" role="radio" aria-checked="false">No</button>
+          </div>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="lbl" id="lbl-diffwalk"><span class="lbl-dot"></span>Difficulty Walking or Climbing Stairs</label>
+          <div class="seg-group" id="g-diffwalk" role="radiogroup" aria-labelledby="lbl-diffwalk">
+            <button class="seg-btn active" data-v="No" role="radio" aria-checked="true">No</button>
+            <button class="seg-btn" data-v="Yes" role="radio" aria-checked="false">Yes</button>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
   <!-- STEP 4 · Health Days -->
   <div id="step-4" class="sp hidden">
-    <div class="mb-7">
-      <p class="text-[10px] font-bold text-teal-600 uppercase tracking-[.12em] mb-1">Step 4 of 4</p>
-      <h2 class="text-[1.55rem] font-semibold text-stone-900 tracking-tight leading-tight">Health Impairment Days</h2>
-      <p class="text-[13px] text-stone-400 mt-1">Poor-health days in the past 30 days.</p>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-7 mb-9">
-
-      <div class="flex flex-col">
-        <label class="lbl">Poor Physical Health Days <span class="normal-case font-normal text-stone-400">(of 30)</span></label>
-        <div class="flex items-center gap-4">
-          <input type="range" id="s-phys" min="0" max="30" value="0" class="flex-1" />
-          <input type="number" id="n-phys" class="num-in" min="0" max="30" value="0" />
-        </div>
-        <div class="flex justify-between text-[10px] text-stone-400 mt-1.5 px-0.5">
-          <span>0 days</span><span>30 days</span>
-        </div>
+    <div class="step-card">
+      <div class="mb-7">
+        <span class="step-label"><i data-lucide="calendar-days" class="w-3 h-3"></i>Step 4 of 4</span>
+        <h2 class="text-[1.7rem] font-semibold text-stone-900 tracking-tight leading-tight">Health Impairment Days</h2>
+        <p class="text-[14px] text-stone-400 mt-1.5 leading-relaxed">Poor-health days in the past 30 days.</p>
       </div>
 
-      <div class="flex flex-col">
-        <label class="lbl">Poor Mental Health Days <span class="normal-case font-normal text-stone-400">(of 30)</span></label>
-        <div class="flex items-center gap-4">
-          <input type="range" id="s-ment" min="0" max="30" value="0" class="flex-1" />
-          <input type="number" id="n-ment" class="num-in" min="0" max="30" value="0" />
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+
+        <div class="flex flex-col">
+          <label class="lbl" for="s-phys"><span class="lbl-dot"></span>Poor Physical Health Days <span class="normal-case font-normal text-stone-400">(of 30)</span></label>
+          <div class="slider-wrap">
+            <div class="flex items-center gap-4 mb-2">
+              <input type="range" id="s-phys" min="0" max="30" value="0" class="flex-1" />
+              <input type="number" id="n-phys" class="num-in" min="0" max="30" value="0" aria-label="Physical health days" />
+            </div>
+            <div class="flex justify-between text-[11.5px] text-stone-400 px-0.5">
+              <span>0 days</span><span>30 days</span>
+            </div>
+          </div>
         </div>
-        <div class="flex justify-between text-[10px] text-stone-400 mt-1.5 px-0.5">
-          <span>0 days</span><span>30 days</span>
+
+        <div class="flex flex-col">
+          <label class="lbl" for="s-ment"><span class="lbl-dot"></span>Poor Mental Health Days <span class="normal-case font-normal text-stone-400">(of 30)</span></label>
+          <div class="slider-wrap">
+            <div class="flex items-center gap-4 mb-2">
+              <input type="range" id="s-ment" min="0" max="30" value="0" class="flex-1" />
+              <input type="number" id="n-ment" class="num-in" min="0" max="30" value="0" aria-label="Mental health days" />
+            </div>
+            <div class="flex justify-between text-[11.5px] text-stone-400 px-0.5">
+              <span>0 days</span><span>30 days</span>
+            </div>
+          </div>
         </div>
+
       </div>
 
-    </div>
-
-    <!-- Review strip -->
-    <div class="border border-stone-200 rounded-xl bg-white p-5">
-      <p class="text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-4">Summary Review</p>
-      <div id="review-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+      <!-- Review strip -->
+      <div class="border border-stone-200 rounded-2xl bg-stone-50/60 p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-stone-400"></i>
+          <p class="text-[11px] font-bold text-stone-400 uppercase tracking-widest">Summary Review</p>
+        </div>
+        <div id="review-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+      </div>
     </div>
   </div>
 
   <!-- ── Navigation ── -->
-  <div class="flex items-center justify-between mt-10">
+  <div class="flex items-center justify-between mt-7">
     <button id="btn-back" onclick="goBack()"
-      class="flex items-center gap-1.5 text-[13px] font-medium text-stone-500 hover:text-stone-800 transition-colors"
-      style="visibility:hidden">
+      class="btn-ghost"
+      style="visibility:hidden" aria-label="Go to previous step">
       <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
     </button>
     <div class="flex items-center gap-3">
-      <span id="step-cnt" class="text-[11px] text-stone-400"></span>
-      <button id="btn-next" onclick="goNext()"
-        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-[9px] bg-teal-600 text-white text-[13px] font-semibold hover:bg-teal-700 active:scale-[.97] transition-all shadow-sm">
-        Continue <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      <span id="step-cnt" class="text-[12px] font-medium text-stone-400 tabular-nums" aria-live="polite"></span>
+      <button id="btn-next" onclick="goNext()" class="btn-primary">
+        Continue <i data-lucide="arrow-right" class="w-4 h-4 inline-block ml-0.5 align-middle"></i>
       </button>
     </div>
   </div>
@@ -425,18 +601,33 @@
 </main>
 
 <!-- ══════════════════════════ RESULT OVERLAY ══════════════════════════ -->
-<div id="result-overlay" class="fixed inset-0 bg-stone-50/95 backdrop-blur-sm z-50 flex items-center justify-center hidden overflow-auto py-8">
+<div id="result-overlay" class="fixed inset-0 bg-stone-50/95 backdrop-blur-md z-50 flex items-center justify-center hidden overflow-auto py-8"
+     role="dialog" aria-modal="true" aria-label="Risk Assessment Result" aria-live="polite">
   <div class="w-full max-w-sm mx-5 animate-scale-in">
     <div id="result-inner"></div>
     <button onclick="resetAll()"
-      class="mt-6 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-[9px] border border-stone-200 bg-white text-stone-600 text-[13px] font-medium hover:bg-stone-100 hover:border-stone-300 transition-all">
-      <i data-lucide="rotate-ccw" class="w-4 h-4"></i> New Assessment
+      class="mt-4 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-[11px] border border-stone-200 bg-white text-stone-600 text-[13.5px] font-medium hover:bg-stone-50 hover:border-stone-300 transition-all shadow-sm">
+      <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> New Assessment
     </button>
-    <p class="text-center text-[10.5px] text-stone-400 mt-4 leading-relaxed px-4">
+    <p class="text-center text-[11.5px] text-stone-400 mt-4 leading-relaxed px-4">
       For educational &amp; research use only. Not a medical device.<br>Consult a qualified clinician for clinical decisions.
     </p>
   </div>
 </div>
+
+<!-- ══════════════════════════ FOOTER ══════════════════════════ -->
+<footer class="border-t border-stone-200 mt-14 py-7">
+  <div class="max-w-3xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <p class="text-[11.5px] text-stone-400">
+      Logistic Regression &nbsp;&middot;&nbsp; CDC BRFSS 2020 &nbsp;&middot;&nbsp; 54,746 records
+    </p>
+    <div class="flex items-center gap-2.5">
+      <span class="text-[11px] text-stone-400 bg-stone-100 px-2.5 py-1 rounded-full">AUC 0.8412</span>
+      <span class="text-[11px] text-stone-400 bg-stone-100 px-2.5 py-1 rounded-full">F1 0.7708</span>
+      <span class="text-[11px] text-stone-400">Educational use only</span>
+    </div>
+  </div>
+</footer>
 
 <!-- ══════════════════════════ JS ══════════════════════════ -->
 <script>
@@ -523,6 +714,13 @@
     return 1 / (1 + Math.exp(-logit));
   }
 
+  /* ─── Risk level helper ─────────────────────────────── */
+  function getRiskLevel(pct) {
+    if (pct < 35)  return 'low';
+    if (pct < 65)  return 'moderate';
+    return 'high';
+  }
+
   /* ─── Slider sync ────────────────────────────────────── */
   function linkSlider(sid, nid, key) {
     const s = document.getElementById(sid);
@@ -532,23 +730,56 @@
       const pct = ((v - +s.min) / (+s.max - +s.min)) * 100;
       s.style.setProperty('--fill', pct + '%');
     };
-    s.addEventListener('input', () => { n.value = s.value; fd[key] = +s.value; setFill(+s.value); });
-    n.addEventListener('change', () => {
-      const v = Math.min(+s.max, Math.max(+s.min, +n.value || 0));
+    const clampAndSet = raw => {
+      const min = +s.min, max = +s.max;
+      let v = parseInt(raw, 10);
+      if (isNaN(v)) v = min;
+      v = Math.min(max, Math.max(min, v));
       s.value = v; n.value = v; fd[key] = v; setFill(v);
+    };
+    s.addEventListener('input', () => { n.value = s.value; fd[key] = +s.value; setFill(+s.value); });
+    n.addEventListener('change', () => clampAndSet(n.value));
+    n.addEventListener('input', () => {
+      // Clamp on keystroke if input exceeds max
+      if (+n.value > +s.max || +n.value < +s.min) clampAndSet(n.value);
+      else { const v = +n.value || 0; s.value = v; fd[key] = v; setFill(v); }
     });
     setFill(+s.value);
   }
 
-  /* ─── Segmented init ─────────────────────────────────── */
+  /* ─── Segmented init with Keyboard Nav ─────────────────── */
   function initSegs() {
     document.querySelectorAll('.seg-group').forEach(g => {
-      g.querySelectorAll('.seg-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          g.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
+      const btns = Array.from(g.querySelectorAll('.seg-btn'));
+      btns.forEach((btn, idx) => {
+        const selectBtn = (target) => {
+          btns.forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-checked', 'false');
+            b.setAttribute('tabindex', '-1');
+          });
+          target.classList.add('active');
+          target.setAttribute('aria-checked', 'true');
+          target.setAttribute('tabindex', '0');
+          target.focus();
           const key = gMap[g.id];
-          if (key) fd[key] = btn.dataset.v || btn.getAttribute('data-v') || btn.textContent.trim();
+          if (key) fd[key] = target.dataset.v || target.getAttribute('data-v') || target.textContent.trim();
+        };
+
+        btn.addEventListener('click', () => selectBtn(btn));
+
+        // ARIA Keyboard navigation for radiogroup
+        btn.addEventListener('keydown', e => {
+          let nextIdx = null;
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            nextIdx = (idx + 1) % btns.length;
+          } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            nextIdx = (idx - 1 + btns.length) % btns.length;
+          }
+          if (nextIdx !== null) {
+            e.preventDefault();
+            selectBtn(btns[nextIdx]);
+          }
         });
       });
     });
@@ -559,7 +790,6 @@
   const TOTAL = 4;
 
   function showStep(n) {
-    // Panels
     document.querySelectorAll('.sp').forEach((p, i) => {
       const show = (i + 1 === n);
       if (show) {
@@ -572,23 +802,21 @@
       }
     });
 
-    // Progress bar
     const pct = Math.round(((n - 1) / (TOTAL - 1)) * 100);
     document.getElementById('prog-bar').style.width = pct + '%';
 
-    // Step dots
     document.querySelectorAll('.step-node').forEach(node => {
       const s = +node.dataset.s;
       const dot  = node.querySelector('.sdot');
       const num  = node.querySelector('.snum');
       const lbl  = node.querySelector('.slbl');
-      dot.className = 'sdot w-[26px] h-[26px] rounded-full border-2 flex items-center justify-center relative z-10 transition-all duration-300';
+      dot.className = 'sdot w-7 h-7 rounded-full border-2 flex items-center justify-center relative z-10';
       if (s < n) {
         dot.classList.add('border-teal-500','bg-teal-500');
         num.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><polyline points="20 6 9 17 4 12"/></svg>';
         lbl.className = 'slbl text-[10px] font-semibold text-teal-600 text-center leading-snug';
       } else if (s === n) {
-        dot.classList.add('border-teal-500','bg-stone-50');
+        dot.classList.add('border-teal-500','bg-white','sdot-active');
         num.innerHTML = s; num.className = 'snum text-[11px] font-semibold text-teal-600';
         lbl.className = 'slbl text-[10px] font-semibold text-teal-600 text-center leading-snug';
       } else {
@@ -598,10 +826,8 @@
       }
     });
 
-    // Back btn
     document.getElementById('btn-back').style.visibility = n > 1 ? 'visible' : 'hidden';
 
-    // Next btn
     const nb = document.getElementById('btn-next');
     if (n === TOTAL) {
       nb.innerHTML = 'Run Assessment <i data-lucide="zap" class="w-4 h-4 inline-block ml-1 align-middle"></i>';
@@ -628,77 +854,134 @@
       { l:'Comorbidities',v: multi === 0 ? 'None' : multi + ' condition(s)' },
     ];
     document.getElementById('review-grid').innerHTML = items.map(i =>
-      `<div class="rounded-lg border border-stone-100 bg-stone-50 p-3">
-        <div class="text-[9.5px] font-semibold text-stone-400 uppercase tracking-wide mb-0.5">${i.l}</div>
-        <div class="text-[13px] font-medium text-stone-700 truncate">${i.v}</div>
+      `<div class="review-card">
+        <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-1">${i.l}</div>
+        <div class="text-[13.5px] font-semibold text-stone-700 truncate">${i.v}</div>
       </div>`
     ).join('');
   }
 
-  /* ─── Run assessment ─────────────────────────────────── */
-  function runAssessment() {
+  /* ─── Real API / Fallback Assessment ──────────────── */
+  let apiAvailable = false;
+  async function checkApiHealth() {
+    const badge = document.getElementById('model-src-badge');
+    try {
+      const res = await fetch('http://localhost:5000/health', { signal: AbortSignal.timeout(1500) });
+      if (res.ok) {
+        apiAvailable = true;
+        if (badge) {
+          badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-700';
+          badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>Live Model API';
+        }
+        return;
+      }
+    } catch (_) {}
+    apiAvailable = false;
+    if (badge) {
+      badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-stone-100 border border-stone-200 text-[11px] font-medium text-stone-500';
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-stone-400 inline-block"></span>JS Approx';
+    }
+  }
+
+  async function getPredictionProbability() {
+    if (apiAvailable) {
+      try {
+        const res = await fetch('http://localhost:5000/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fd),
+          signal: AbortSignal.timeout(3000),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.probability === 'number') return data.probability;
+        }
+      } catch (err) {
+        console.warn('API predict failed, falling back to local formula:', err);
+      }
+    }
+    return computeRisk();
+  }
+
+  async function runAssessment() {
     const nb = document.getElementById('btn-next');
     nb.disabled = true;
     nb.innerHTML = `<svg class="animate-spin w-4 h-4 mr-2 inline-block align-middle" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>Evaluating…`;
 
-    setTimeout(() => {
-      nb.disabled = false;
-      const proba = computeRisk();
-      const pct   = Math.round(proba * 100);
-      const THRESH = 40;
-      const hi = pct >= THRESH;
+    const proba = await getPredictionProbability();
+    const pct   = Math.round(proba * 100);
+    const level = getRiskLevel(pct);
 
-      const C = 2 * Math.PI * 45; // ≈282.74
-      const dashOffset = C - (pct / 100) * C;
+    const C = 2 * Math.PI * 45; // ≈282.74
+    const dashOffset = C - (pct / 100) * C;
 
-      const ac  = hi ? '#c2410c' : '#0d9488';
-      const bg  = hi ? '#fff7ed' : '#f0fdfa';
-      const brd = hi ? '#fed7aa' : '#99f6e4';
-      const bBg = hi ? '#fef3c7' : '#d1fae5';
-      const bTx = hi ? '#92400e' : '#065f46';
-      const ttl = hi ? 'Elevated Risk Detected'  : 'Low Risk Profile';
-      const sub = hi ? 'Consider consulting a cardiologist for a thorough evaluation.' : 'Your indicators suggest a lower cardiovascular risk at this time.';
-      const badge = hi ? 'HIGH RISK' : 'LOW RISK';
+    // Colors by risk level
+    const palette = {
+      low:      { ac:'#0d9488', bg:'#f0fdfa', brd:'#99f6e4', bBg:'#d1fae5', bTx:'#065f46', ttl:'Low Risk Profile',       sub:'Your indicators suggest a lower cardiovascular risk at this time.', badge:'LOW RISK' },
+      moderate: { ac:'#d97706', bg:'#fffbeb', brd:'#fde68a', bBg:'#fef3c7', bTx:'#92400e', ttl:'Moderate Risk Detected',  sub:'Some risk factors are elevated. Consider a routine cardiac check-up.', badge:'MODERATE RISK' },
+      high:     { ac:'#c2410c', bg:'#fff7ed', brd:'#fed7aa', bBg:'#ffedd5', bTx:'#7c2d12', ttl:'Elevated Risk Detected',  sub:'Multiple risk factors detected. Consult a cardiologist for a full evaluation.', badge:'HIGH RISK' },
+    };
+    const { ac, bg, brd, bBg, bTx, ttl, sub, badge } = palette[level];
 
-      document.getElementById('result-inner').innerHTML = `
-        <div style="background:${bg};border:1.5px solid ${brd}" class="rounded-2xl p-7 text-center">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-5"
-            style="background:${bBg};color:${bTx}">
-            <span class="w-[6px] h-[6px] rounded-full inline-block" style="background:${ac}"></span>${badge}
-          </span>
+    document.getElementById('result-inner').innerHTML = `
+      <div style="background:${bg};border:1.5px solid ${brd}" class="rounded-2xl p-7 text-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-5"
+          style="background:${bBg};color:${bTx}">
+          <span class="w-[6px] h-[6px] rounded-full inline-block" style="background:${ac}"></span>${badge}
+        </span>
 
-          <!-- Ring -->
-          <div class="flex justify-center mb-4">
-            <div class="relative w-[140px] h-[140px]">
-              <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90" aria-hidden="true">
-                <circle cx="50" cy="50" r="45" fill="none" stroke="#e7e5e4" stroke-width="8"/>
-                <circle cx="50" cy="50" r="45" fill="none" stroke="${ac}" stroke-width="8"
-                  stroke-linecap="round"
-                  stroke-dasharray="${C.toFixed(2)}"
-                  stroke-dashoffset="${C.toFixed(2)}"
-                  class="ring-path"
-                  style="--offset:${dashOffset.toFixed(2)}"/>
-              </svg>
-              <div class="absolute inset-0 flex flex-col items-center justify-center">
-                <span class="text-[2rem] font-bold tracking-tight leading-none" style="color:${ac}">${pct}<span class="text-lg font-medium">%</span></span>
-                <span class="text-[9.5px] font-semibold text-stone-400 uppercase tracking-widest mt-0.5">risk score</span>
-              </div>
+        <!-- Ring -->
+        <div class="flex justify-center mb-4">
+          <div class="relative w-[140px] h-[140px]">
+            <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90" aria-hidden="true">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#e7e5e4" stroke-width="8"/>
+              <circle cx="50" cy="50" r="45" fill="none" stroke="${ac}" stroke-width="8"
+                stroke-linecap="round"
+                stroke-dasharray="${C.toFixed(2)}"
+                stroke-dashoffset="${C.toFixed(2)}"
+                class="ring-path"
+                style="--offset:${dashOffset.toFixed(2)}"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-[2rem] font-bold tracking-tight leading-none" style="color:${ac}">${pct}<span class="text-lg font-medium">%</span></span>
+              <span class="text-[9.5px] font-semibold text-stone-400 uppercase tracking-widest mt-0.5">risk score</span>
             </div>
           </div>
+        </div>
 
-          <h3 class="text-[1.05rem] font-semibold text-stone-900 mb-1.5">${ttl}</h3>
-          <p class="text-[13px] text-stone-500 leading-relaxed max-w-[260px] mx-auto">${sub}</p>
+        <h3 class="text-[1.05rem] font-semibold text-stone-900 mb-1.5">${ttl}</h3>
+        <p class="text-[13px] text-stone-500 leading-relaxed max-w-[270px] mx-auto">${sub}</p>
 
-          <div class="mt-5 text-left">
-            <p class="text-[9.5px] font-semibold text-stone-400 uppercase tracking-widest mb-3">Contributing Factors</p>
-            <div class="flex flex-wrap gap-1.5">${buildPills(hi, ac, bBg, bTx)}</div>
+        <!-- Model confidence strip -->
+        <div class="mt-5 border-t border-stone-200/70 pt-4 grid grid-cols-3 gap-2 text-center">
+          <div class="metric-chip">
+            <div class="val">0.8412</div>
+            <div class="key">AUC-ROC</div>
           </div>
-        </div>`;
+          <div class="metric-chip">
+            <div class="val">78.4%</div>
+            <div class="key">Sensitivity</div>
+          </div>
+          <div class="metric-chip">
+            <div class="val">74.9%</div>
+            <div class="key">Specificity</div>
+          </div>
+        </div>
 
-      document.getElementById('result-overlay').classList.remove('hidden');
-      lucide.createIcons();
+        <!-- Contributing factors -->
+        <div class="mt-4 text-left">
+          <p class="text-[9.5px] font-semibold text-stone-400 uppercase tracking-widest mb-3">Contributing Factors</p>
+          <div class="flex flex-wrap gap-1.5">${buildPills(level, ac, bBg, bTx)}</div>
+        </div>
+      </div>`;
 
-      // Kick ring animation
+    document.getElementById('result-overlay').classList.remove('hidden');
+    nb.disabled = false;
+    nb.innerHTML = 'Run Assessment <i data-lucide="zap" class="w-4 h-4 inline-block ml-1 align-middle"></i>';
+    lucide.createIcons();
+
+    // Double rAF avoids SVG animation 1-frame flash
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const ring = document.querySelector('.ring-path');
         if (!ring) return;
@@ -708,25 +991,25 @@
         ring.style.setProperty('--offset', dashOffset.toFixed(2));
         ring.style.animation = 'ringDraw 1.15s cubic-bezier(.16,1,.3,1) .15s both';
       });
-
-    }, 1100);
+    });
   }
 
-  function buildPills(hi, ac, bBg, bTx) {
+  function buildPills(level, ac, bBg, bTx) {
     const ageNum = ageMap[fd.AgeCategory] || 50;
     const candidates = [
-      { t: ageNum >= 60,                               l: 'Age ≥ 60',          risk: true  },
-      { t: /yes/i.test(fd.Smoking),                    l: 'Smoker',            risk: true  },
-      { t: /yes/i.test(fd.DiffWalking),                l: 'Mobility limit',    risk: true  },
-      { t: /obese/i.test(fd.BMICategory),              l: 'Obese BMI',         risk: true  },
-      { t: /poor|fair/i.test(fd.GenHealth),            l: 'Poor health',       risk: true  },
-      { t: /yes/i.test(fd.Stroke),                     l: 'Stroke history',    risk: true  },
-      { t: /yes/i.test(fd.KidneyDisease),              l: 'Kidney disease',    risk: true  },
-      { t: /yes/i.test(fd.PhysicalActivity),           l: 'Active lifestyle',  risk: false },
-      { t: ageNum < 45,                                l: 'Younger age',       risk: false },
-      { t: /no/i.test(fd.Smoking),                     l: 'Non-smoker',        risk: false },
-      { t: +fd.SleepTime >= 7 && +fd.SleepTime <= 9,  l: 'Healthy sleep',     risk: false },
-      { t: /excellent|very good/i.test(fd.GenHealth),  l: 'Good health',       risk: false },
+      { t: ageNum >= 60,                               l: 'Age ≥ 60',         risk: true  },
+      { t: /yes/i.test(fd.Smoking),                    l: 'Smoker',           risk: true  },
+      { t: /yes/i.test(fd.DiffWalking),                l: 'Mobility limit',   risk: true  },
+      { t: /obese/i.test(fd.BMICategory),              l: 'Obese BMI',        risk: true  },
+      { t: /poor|fair/i.test(fd.GenHealth),            l: 'Poor health',      risk: true  },
+      { t: /yes/i.test(fd.Stroke),                     l: 'Stroke history',   risk: true  },
+      { t: /yes/i.test(fd.KidneyDisease),              l: 'Kidney disease',   risk: true  },
+      { t: /yes/i.test(fd.Diabetic),                   l: 'Diabetes',         risk: true  },
+      { t: /yes/i.test(fd.PhysicalActivity),           l: 'Active lifestyle', risk: false },
+      { t: ageNum < 45,                                l: 'Younger age',      risk: false },
+      { t: /no/i.test(fd.Smoking),                     l: 'Non-smoker',       risk: false },
+      { t: +fd.SleepTime >= 7 && +fd.SleepTime <= 9,  l: 'Healthy sleep',    risk: false },
+      { t: /excellent|very good/i.test(fd.GenHealth),  l: 'Good health',      risk: false },
     ];
     return candidates.filter(c => c.t).slice(0, 6).map(f => {
       const bg_ = f.risk ? '#fff1e6' : '#e6faf8';
@@ -735,29 +1018,100 @@
     }).join('');
   }
 
+  /* ─── Preset fills ───────────────────────────────────── */
+  window.fillHighRisk = function() {
+    setSegValue('g-age',      '75-79');
+    setSegValue('g-sex',      'Male');
+    setSegValue('g-bmi',      'Obese (30.0 <= BMI < +Inf)');
+    setSegValue('g-race',     'White');
+    setSegValue('g-stroke',   'Yes');
+    setSegValue('g-diabetic', 'Yes');
+    setSegValue('g-asthma',   'Yes');
+    setSegValue('g-kidney',   'Yes');
+    setSegValue('g-skin',     'No');
+    setSegValue('g-genhealth','Poor');
+    setSegValue('g-smoking',  'Yes');
+    setSegValue('g-alcohol',  'No');
+    setSegValue('g-physact',  'No');
+    setSegValue('g-diffwalk', 'Yes');
+    setSliderValue('s-sleep', 'n-sleep', 5, 'SleepTime');
+    setSliderValue('s-phys',  'n-phys',  20, 'PhysicalHealth');
+    setSliderValue('s-ment',  'n-ment',  15, 'MentalHealth');
+    cur = 1; showStep(1);
+  };
+
+  window.fillLowRisk = function() {
+    setSegValue('g-age',      '25-29');
+    setSegValue('g-sex',      'Female');
+    setSegValue('g-bmi',      'Normal weight (18.5 <= BMI < 25.0)');
+    setSegValue('g-race',     'White');
+    setSegValue('g-stroke',   'No');
+    setSegValue('g-diabetic', 'No');
+    setSegValue('g-asthma',   'No');
+    setSegValue('g-kidney',   'No');
+    setSegValue('g-skin',     'No');
+    setSegValue('g-genhealth','Excellent');
+    setSegValue('g-smoking',  'No');
+    setSegValue('g-alcohol',  'No');
+    setSegValue('g-physact',  'Yes');
+    setSegValue('g-diffwalk', 'No');
+    setSliderValue('s-sleep', 'n-sleep', 8, 'SleepTime');
+    setSliderValue('s-phys',  'n-phys',  0, 'PhysicalHealth');
+    setSliderValue('s-ment',  'n-ment',  0, 'MentalHealth');
+    cur = 1; showStep(1);
+  };
+
+  function setSegValue(groupId, value) {
+    const g = document.getElementById(groupId);
+    if (!g) return;
+    const btns = g.querySelectorAll('.seg-btn');
+    btns.forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-checked', 'false');
+      b.setAttribute('tabindex', '-1');
+    });
+    const target = [...btns].find(b => (b.dataset.v || b.textContent.trim()) === value);
+    if (target) {
+      target.classList.add('active');
+      target.setAttribute('aria-checked', 'true');
+      target.setAttribute('tabindex', '0');
+    }
+    const key = gMap[groupId];
+    if (key) fd[key] = value;
+  }
+
+  function setSliderValue(sid, nid, val, key) {
+    const s = document.getElementById(sid), n = document.getElementById(nid);
+    if (!s || !n) return;
+    s.value = val; n.value = val; fd[key] = val;
+    const pct = ((val - +s.min) / (+s.max - +s.min)) * 100;
+    s.style.setProperty('--fill', pct + '%');
+  }
+
   /* ─── Reset ──────────────────────────────────────────── */
   window.resetAll = function () {
     document.getElementById('result-overlay').classList.add('hidden');
-    // Reset segs
     document.querySelectorAll('.seg-group').forEach(g => {
       const btns = g.querySelectorAll('.seg-btn');
-      btns.forEach(b => b.classList.remove('active'));
-      const def = g.querySelector('[data-v]'); // first option
-      if (def) def.classList.add('active');
+      btns.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-checked', 'false');
+        b.setAttribute('tabindex', '-1');
+      });
+      const def = g.querySelector('[data-v]');
+      if (def) {
+        def.classList.add('active');
+        def.setAttribute('aria-checked', 'true');
+        def.setAttribute('tabindex', '0');
+      }
       const key = gMap[g.id];
       if (key) fd[key] = (def?.dataset?.v) || '';
     });
-    // Reset sliders
     [['s-sleep','n-sleep',7,'SleepTime'],
      ['s-phys','n-phys',0,'PhysicalHealth'],
      ['s-ment','n-ment',0,'MentalHealth']].forEach(([sid,nid,def,key]) => {
-      const s = document.getElementById(sid), n = document.getElementById(nid);
-      if (!s||!n) return;
-      s.value = def; n.value = def; fd[key] = def;
-      const pct = ((def - +s.min) / (+s.max - +s.min)) * 100;
-      s.style.setProperty('--fill', pct + '%');
+      setSliderValue(sid, nid, def, key);
     });
-    // Re-init seg defaults
     fd.AgeCategory = '18-24'; fd.Sex = 'Female';
     fd.BMICategory = 'Normal weight (18.5 <= BMI < 25.0)'; fd.Race = 'White';
     fd.Stroke = 'No'; fd.Diabetic = 'No'; fd.Asthma = 'No';
@@ -776,8 +1130,17 @@
   linkSlider('s-phys', 'n-phys', 'PhysicalHealth');
   linkSlider('s-ment', 'n-ment', 'MentalHealth');
   showStep(1);
+  checkApiHealth();
   lucide.createIcons();
 }());
 </script>
+<noscript>
+  <div style="position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;padding:2rem;text-align:center;">
+    <div>
+      <h2 style="font-size:1.5rem;font-weight:700;color:#1c1917;margin-bottom:0.5rem;">JavaScript Required</h2>
+      <p style="color:#78716c;max-width:400px;">This Cardiac Risk Assessment tool requires JavaScript to operate interactive controls and calculate risk scores. Please enable JavaScript in your browser settings to continue.</p>
+    </div>
+  </div>
+</noscript>
 </body>
 </html>

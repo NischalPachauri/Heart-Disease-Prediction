@@ -4,15 +4,17 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-streamlit = "*"
-pandas = "*"
-polars = "*"
+pandas = ">=2.0.0"
+numpy = ">=1.26.0"
 scikit-learn = ">=1.4.0"
-imbalanced-learn = "*"
-matplotlib = "*"
-seaborn = "*"
+imbalanced-learn = ">=0.12.0"
+matplotlib = ">=3.8.0"
+seaborn = ">=0.13.0"
+flask = ">=3.0.0"
+flask-cors = ">=4.0.0"
 
 [dev-packages]
+streamlit = ">=1.30.0"
 
 [requires]
 python_version = "3.9"

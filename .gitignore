@@ -211,3 +211,20 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# ── Project-specific ──────────────────────────────────────────────────────────
+# Large raw dataset (33 MB, not used by the training pipeline directly)
+data/heart_2020_cleaned.csv
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Generated chart outputs (re-created by train_evaluate.py)
+outputs/analysis/*.png
+outputs/analysis/analysis_metrics.json
+outputs/analysis/analysis_summary.csv
+
+# Keep trained model artifacts
+!model/logistic_regression_enhanced.pkl
+!model/model_metadata.json

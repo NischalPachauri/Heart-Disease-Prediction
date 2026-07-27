@@ -1,8 +1,8 @@
 # Heart Disease Prediction — Logistic Regression
 
 Cardiovascular risk screening tool using a Logistic Regression model trained on 54,746 CDC BRFSS survey records.
-- **Model:** Logistic Regression with SMOTE resampling, Bagged ensemble, and calibrated decision threshold
-- **AUC-ROC:** 0.841 &nbsp;|&nbsp; **Recall:** 86.6% &nbsp;|&nbsp; **Accuracy:** 76.7%
+- **Model:** Logistic Regression (Baseline winner / Bagged ensemble variant available)
+- **AUC-ROC:** 0.841 &nbsp;|&nbsp; **Recall:** 78.4% &nbsp;|&nbsp; **Accuracy:** 76.7% &nbsp;|&nbsp; **F1-Score:** 0.771
 
 ---
 
@@ -10,20 +10,20 @@ Cardiovascular risk screening tool using a Logistic Regression model trained on 
 
 ```
 .
-├── index.html              # Frontend — open in browser or serve via Python
+├── index.html              # Frontend web app (open in browser)
+├── server.py               # Flask REST API server (serves real predictions)
 ├── train_evaluate.py       # ML training pipeline (re-run to retrain model)
 ├── requirements.txt        # pip dependencies
-├── Pipfile                 # Pipenv config
-├── lr_training_results.json
+├── Pipfile                 # Pipenv environment config
+├── lr_training_results.json# Exported model metrics summary
 ├── LICENSE
 ├── data/
-│   ├── heart_2020_balanced_54k.csv   # Training dataset (54,746 rows, 50/50 balanced)
-│   └── heart_2020_cleaned.csv        # Full cleaned CDC dataset
+│   └── heart_2020_balanced_54k.csv   # Training dataset (54,746 rows, 50/50 balanced)
 ├── model/
-│   ├── logistic_regression_enhanced.pkl  # Trained model (loaded by app)
-│   └── model_metadata.json               # Feature columns, optimal threshold, metrics
+│   ├── logistic_regression_enhanced.pkl  # Trained scikit-learn model
+│   └── model_metadata.json               # Feature columns, threshold, metadata
 └── outputs/
-    └── analysis/           # Training charts (confusion matrices, ROC curves, etc.)
+    └── analysis/           # Training charts & evaluation artifacts
 ```
 
 ---
@@ -36,18 +36,29 @@ Cardiovascular risk screening tool using a Logistic Regression model trained on 
 pip install -r requirements.txt
 ```
 
-### 2. Run the frontend (from the project root)
+### 2. Start the Prediction API Server (Optional but recommended)
 
-**Option A — open directly (no terminal needed):**
-Double-click `index.html` in File Explorer.
+To serve live predictions from the trained `.pkl` model:
 
-**Option B — serve via Python:**
+```bash
+python server.py
+```
+*Runs on `http://localhost:5000`*.
+
+### 3. Open the Frontend
+
+**Option A — Local HTTP server (recommended):**
 ```bash
 python -m http.server 8000
 ```
 Then open **http://localhost:8000** in your browser.
 
-### 3. Retrain the model (optional)
+*Note: The web app automatically detects `server.py` at `http://localhost:5000`. If `server.py` is running, it calls the live trained `.pkl` model. If not, it gracefully falls back to the client-side approximation with a clear visual badge.*
+
+**Option B — Direct file access:**
+Double-click `index.html` in File Explorer.
+
+### 4. Retrain the Model (Optional)
 
 ```bash
 python train_evaluate.py
@@ -72,6 +83,6 @@ This retrains the model, saves updated `.pkl` and `model_metadata.json`, and reg
 
 ```
 Raw CSV → Feature Engineering → One-Hot Encoding → Train/Test Split (90/10)
-→ SMOTE Resampling → Bagged Logistic Regression (35 estimators)
-→ Threshold Calibration (0.395) → Saved model (.pkl)
+→ Logistic Regression Baseline / Bagged Ensemble
+→ Exported Model (.pkl + metadata.json)
 ```

@@ -1,12 +1,33 @@
 {
   "winner_name": "Baseline LR",
   "optimal_threshold": 0.3954614278570744,
-  "accuracy": 0.7667579908675799,
-  "precision": 0.7575864502470007,
-  "recall": 0.7844355133357691,
-  "f1_score": 0.770777239274816,
-  "auc_roc": 0.8412400022097954,
-  "specificity": 0.7490869247626004,
+  "dataset_stats": {
+    "raw_rows": 54746,
+    "raw_cols": 18,
+    "test_size": 0.1,
+    "random_state": 42,
+    "cv_folds": 5,
+    "class_distribution_raw": {
+      "1": 27373,
+      "0": 27373
+    },
+    "n_engineered_features": 6,
+    "n_total_features": 59,
+    "train_rows": 49271,
+    "test_rows": 5475,
+    "class_distribution_post_smote": {
+      "0": 24636,
+      "1": 24636
+    }
+  },
+  "engineered_features": [
+    "MultimorbidityIndex",
+    "LifestyleRiskScore",
+    "TotalImpairmentDays",
+    "GenHealthOrdinal",
+    "AgeNumeric",
+    "AgeSquared"
+  ],
   "feature_columns": [
     "PhysicalHealth",
     "MentalHealth",
@@ -67,5 +88,199 @@
     "KidneyDisease_Yes",
     "SkinCancer_No",
     "SkinCancer_Yes"
-  ]
+  ],
+  "pipeline_summary": {
+    "smote": {
+      "random_state": 42
+    },
+    "selectk_k": 65,
+    "train_test_split": {
+      "test_size": 0.1,
+      "stratify": true,
+      "random_state": 42
+    }
+  },
+  "hyperparameters": {
+    "Baseline LR": {
+      "type": "LogisticRegression",
+      "max_iter": 2000,
+      "C": 1.0,
+      "solver": "lbfgs",
+      "penalty": "l2",
+      "smote": false,
+      "scaler": null
+    },
+    "SMOTE + Scaled LR": {
+      "type": "Pipeline(StandardScaler + LogisticRegression)",
+      "scaler": "StandardScaler",
+      "max_iter": 3000,
+      "C": 1.0,
+      "solver": "lbfgs",
+      "penalty": "l2",
+      "smote": true
+    },
+    "Polynomial Interactions LR": {
+      "type": "Pipeline(StandardScaler + PolynomialFeatures + SelectKBest + LR)",
+      "poly_degree": 2,
+      "interaction_only": true,
+      "selectk_k": 65,
+      "selectk_score_func": "f_classif",
+      "C": 0.5,
+      "penalty": "l2",
+      "solver": "lbfgs",
+      "max_iter": 3000,
+      "smote": true
+    },
+    "Bagged LR Ensemble (35 Estimators)": {
+      "type": "Pipeline(StandardScaler + BaggingClassifier(LR))",
+      "n_estimators": 35,
+      "max_samples": 0.85,
+      "max_features": 0.9,
+      "base_estimator_C": 1.0,
+      "base_estimator_max_iter": 3000,
+      "penalty": "l2",
+      "smote": true,
+      "n_jobs": -1
+    },
+    "Calibrated Bagged LR (Opt Threshold)": {
+      "type": "Calibrated Bagged LR (Optimal Threshold)",
+      "n_estimators": 35,
+      "max_samples": 0.85,
+      "max_features": 0.9,
+      "base_estimator_C": 1.0,
+      "base_estimator_max_iter": 3000,
+      "penalty": "l2",
+      "smote": true,
+      "n_jobs": -1,
+      "optimal_threshold": 0.3954614278570744
+    }
+  },
+  "cv_scores": {
+    "accuracy": {
+      "mean": 0.7637399920112177,
+      "std": 0.0027429725851501096,
+      "scores": [
+        0.7677321156773211,
+        0.7628614916286149,
+        0.7605033488938502,
+        0.7660848386442054,
+        0.7615181652120966
+      ]
+    },
+    "f1": {
+      "mean": 0.7672877466721177,
+      "std": 0.0032010044518485854,
+      "scores": [
+        0.7708479327259986,
+        0.767763092517142,
+        0.7634796552415314,
+        0.7706239426808638,
+        0.7637241101950533
+      ]
+    },
+    "recall": {
+      "mean": 0.7790223710985584,
+      "std": 0.00597079445379842,
+      "scores": [
+        0.781408565049726,
+        0.783887987012987,
+        0.7730870712401056,
+        0.7858737568500102,
+        0.7708544753399634
+      ]
+    },
+    "roc_auc": {
+      "mean": 0.8406025456919952,
+      "std": 0.0028490936693587802,
+      "scores": [
+        0.8424297915145541,
+        0.841805127590088,
+        0.8353654856747771,
+        0.8434293722651502,
+        0.8399829514154061
+      ]
+    }
+  },
+  "performance": {
+    "Baseline LR": {
+      "accuracy": 0.7667579908675799,
+      "precision": 0.7575864502470007,
+      "recall": 0.7844355133357691,
+      "specificity": 0.7490869247626004,
+      "f1": 0.770777239274816,
+      "f2": 0.7789145261935858,
+      "auc_roc": 0.8412400022097954,
+      "pr_auc": 0.8218206677346979,
+      "log_loss": 0.49206406316822426,
+      "brier_score": 0.16172102434515773,
+      "tp": 2147,
+      "fp": 687,
+      "tn": 2051,
+      "fn": 590
+    },
+    "SMOTE + Scaled LR": {
+      "accuracy": 0.766027397260274,
+      "precision": 0.7570621468926554,
+      "recall": 0.783339422725612,
+      "specificity": 0.7487216946676406,
+      "f1": 0.7699766564912911,
+      "f2": 0.7779390420899854,
+      "auc_roc": 0.8412787003199667,
+      "pr_auc": 0.821844541514291,
+      "log_loss": 0.4920190360785065,
+      "brier_score": 0.16170061256287024,
+      "tp": 2144,
+      "fp": 688,
+      "tn": 2050,
+      "fn": 593
+    },
+    "Polynomial Interactions LR": {
+      "accuracy": 0.7514155251141552,
+      "precision": 0.7395543175487466,
+      "recall": 0.7760321519912313,
+      "specificity": 0.7268078889700511,
+      "f1": 0.7573542520948475,
+      "f2": 0.768451519536903,
+      "auc_roc": 0.8318186804051186,
+      "pr_auc": 0.8120213874732978,
+      "log_loss": 0.5040266223674195,
+      "brier_score": 0.16667697197309383,
+      "tp": 2124,
+      "fp": 748,
+      "tn": 1990,
+      "fn": 613
+    },
+    "Bagged LR Ensemble (35 Estimators)": {
+      "accuracy": 0.766392694063927,
+      "precision": 0.7566901408450705,
+      "recall": 0.7851662404092071,
+      "specificity": 0.7476260043827612,
+      "f1": 0.7706652322036938,
+      "f2": 0.7793008413112852,
+      "auc_roc": 0.8412315953789654,
+      "pr_auc": 0.8217852702108379,
+      "log_loss": 0.4920401152760575,
+      "brier_score": 0.16170960626682784,
+      "tp": 2149,
+      "fp": 691,
+      "tn": 2047,
+      "fn": 588
+    },
+    "Calibrated Bagged LR (Opt Threshold)": {
+      "accuracy": 0.7565296803652968,
+      "precision": 0.710431654676259,
+      "recall": 0.865911582024114,
+      "specificity": 0.6471877282688093,
+      "f1": 0.7805038695866952,
+      "f2": 0.8295995519462336,
+      "auc_roc": 0.8412315953789654,
+      "pr_auc": 0.8217852702108379,
+      "log_loss": 0.4920401152760575,
+      "brier_score": 0.16170960626682784,
+      "tp": 2370,
+      "fp": 966,
+      "tn": 1772,
+      "fn": 367
+    }
+  }
 }
